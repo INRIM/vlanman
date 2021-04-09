@@ -12,9 +12,9 @@ import json
 
 gc = gspread.service_account()
 
-sh = gc.open('LAB_MAGMODEL_VLAN701')
+sh = gc.open('LAB_A_S1_VLAN601')
 records = sh.sheet1.get_all_records()
 
-with open("vlan701.json", "w") as f:
+with open("vlan601.json", "w") as f:
     json.dump(records, f, indent=4)
    

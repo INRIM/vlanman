@@ -54,16 +54,26 @@ class Vlan:
          self.sheet_records = list()
          self.dhcp_config = list()
          
-    def retrieve_data(self, sheet_name):
+    def retrieve_data(self, sheet_name, json_out=''):
         """ Retrieve updated data from a Google Sheet file. """     
         gc = gspread.service_account()
         sh = gc.open(sheet_name)
         
         self.sheet_records = sh.sheet1.get_all_records()
         self.dhcp_config = list()
+        
+        # If optional argument is given, dump to JSON
+        if json_out:
+            with open(json_out, 'w') as f:
+                json.dump(self.sheet_records, f, indent=4)
 
-    def generate_dhcp_config(self):
+    def generate_dhcp_config(self, json_in=''):
         """ Validate data and generate a DHCP config. """
+        # If given, retrieve file from JSON
+        if json_in:
+            with open(json_in, 'r') as f:
+                self.sheet_records = json.load(f)
+        
         # Verify if the data has been retrieved from Google
         if not self.sheet_records:
             raise Exception('No data from Google Sheets. Please retrieve it before with retrieve_data().')

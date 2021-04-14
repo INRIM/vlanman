@@ -28,19 +28,20 @@ ENV DIRPATH=/srv/dhcp_config
 VOLUME ["/var/lib/dhcp_config_gen"]
 
 # Copy credentials to Google
-RUN mkdir ~/.config/gspread
-COPY service_account.json ~/.config/gspread
+RUN mkdir -p /root/.config/gspread
+COPY service_account.json /root/.config/gspread/service_account.json
 
 # Create program dir and enter
 RUN mkdir $DIRPATH
 WORKDIR $DIRPATH
-COPY *.py .
+COPY dhcp_config_generator.py .
 COPY requirements.txt .
+COPY vlan.py .
 COPY list_vlans.json .
 
 # Install requirements
 RUN pip install -r requirements.txt
 
 # Execute program
-ENTRYPOINT ["/usr/bin/python3", "dhcp_config_generator.py", "-o /var/lib/dhcp_config_gen", "-l /var/lib/dhcp_config_gen/output.log"]
+ENTRYPOINT ["python", "dhcp_config_generator.py", "-o", "/var/lib/dhcp_config_gen", "-l", "/var/lib/dhcp_config_gen/output.log"]
 

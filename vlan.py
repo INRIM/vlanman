@@ -34,8 +34,8 @@ import ipaddress
 _HOSTNAME_REGEX = '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
 
 class Vlan:
-    """ Basic class to define a single VLAN. """
-    def __init__(self, vlan_id, ip_network):
+    """ Basic class to define a single VLAN, loading all the settings. """
+    def __init__(self, vlan_id, ip_network, sheet_name, dhcpd_out_file, comment=''):
          """ Constructor to set the main VLAN parameters. """
          # Set VLAN id
          try:
@@ -49,15 +49,23 @@ class Vlan:
              self.vlan_cidr_network = ipaddress.ip_network(ip_network)
          except:
              raise Exception("Invalid IPv4 CIDR network.")
+             
+         # If given, set a comment
+         if comment:
+             self.comment = comment
          
          # Initialize the DHCP config and the sheet records to empty list    
          self.sheet_records = list()
          self.dhcp_config = list()
          
-    def retrieve_data(self, sheet_name, json_out=''):
+         # Set other parameters
+         self.sheet_name = sheet_name
+         self.dhcpd_out_file = dhcpd_out_file
+         
+    def retrieve_data(self, json_out=''):
         """ Retrieve updated data from a Google Sheet file. """     
         gc = gspread.service_account()
-        sh = gc.open(sheet_name)
+        sh = gc.open(self.sheet_name)
         
         self.sheet_records = sh.sheet1.get_all_records()
         self.dhcp_config = list()
@@ -135,12 +143,12 @@ class Vlan:
                                'ipv4': ipv4,
                                'comments': comments})
 
-    def dump_to_dhcpd(self, out_file):
+    def dump_to_dhcpd(self):
         """ Dump configuration to a DHCPd configuration file """
         if not self.dhcp_config:
             raise Exception('No DHCP config. Please run generate_dhcp_config() to generate a config.')
   
-        with open(out_file, 'w') as f:
+        with open(self.dhcpd_out_file, 'w') as f:
             for host in self.dhcp_config:      
                 # Generate DHCPd configuration
                 if host['comments']:    

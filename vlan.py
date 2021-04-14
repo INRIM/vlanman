@@ -29,6 +29,7 @@ import warnings
 import re
 import netaddr
 import ipaddress
+import os.path
 
 # Simple regex to validate a hostname
 _HOSTNAME_REGEX = '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
@@ -143,12 +144,18 @@ class Vlan:
                                'ipv4': ipv4,
                                'comments': comments})
 
-    def dump_to_dhcpd(self):
+    def dump_to_dhcpd(self, out_dir=''):
         """ Dump configuration to a DHCPd configuration file """
         if not self.dhcp_config:
             raise Exception('No DHCP config. Please run generate_dhcp_config() to generate a config.')
+            
+        # Add output dir, if given
+        if out_dir:
+            out_file = os.path.join(out_dir, self.dhcpd_out_file)
+        else:
+            out_file = self.dhcpd_out_file
   
-        with open(self.dhcpd_out_file, 'w') as f:
+        with open(out_file, 'w') as f:
             for host in self.dhcp_config:      
                 # Generate DHCPd configuration
                 if host['comments']:    

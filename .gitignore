@@ -1,6 +1,9 @@
 # Temporary JSON files
 vlan*.json
 
+# Credentials JSON
+service_account.json
+
 # Test DHCPd config files
 *.conf
 

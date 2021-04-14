@@ -41,5 +41,5 @@ COPY list_vlans.json ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Execute program
-ENTRYPOINT ["python", "./dhcp_config_generator.py", "-o", "/var/lib/dhcp_config_gen", "-l", "/var/lib/dhcp_config_gen/output.log"]
+ENTRYPOINT ["python", "./dhcp_config_generator.py", "-o", "/var/lib/dhcp-config-gen", "-l", "/var/lib/dhcp-config-gen/output.log"]
 

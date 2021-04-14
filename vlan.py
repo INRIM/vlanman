@@ -25,7 +25,6 @@
 
 import gspread
 import json
-import warnings
 import re
 import netaddr
 import ipaddress
@@ -46,10 +45,7 @@ class Vlan:
              raise Exception("Invalid VLAN id.") from exc
              
          # Set IP network
-         try:
-             self.vlan_cidr_network = ipaddress.ip_network(ip_network)
-         except:
-             raise Exception("Invalid IPv4 CIDR network.")
+         self.vlan_cidr_network = ipaddress.ip_network(ip_network)
              
          # If given, set a comment
          if comment:
@@ -107,11 +103,7 @@ class Vlan:
                 continue
          
             # Validate and transform MAC address to UNIX extended format (XX:XX:XX:XX:XX:XX)
-            try:
-                mac = netaddr.EUI(mac)
-            except netaddr.AddrFormatError:        
-                warnings.warn('{} is not a well-formed MAC address; skipping it...'.format(mac))
-                continue
+            mac = netaddr.EUI(mac)
             mac.dialect = netaddr.mac_unix_expanded
             if mac not in mac_set:
                 mac_set.add(mac)
@@ -120,15 +112,10 @@ class Vlan:
             
             # Validate hostname
             if not re.search(_HOSTNAME_REGEX, hostname):
-                warnings.warn('{} is not a well-formed hostname; skipping it...'.format(hostname))
-                continue
+                raise Exception('{} is not a well-formed hostname.'.format(hostname))
                 
             # Validate IPv4 address
-            try:
-                ipv4 = ipaddress.ip_address(ipv4)    
-            except ValueError:        
-                warnings.warn('{} is not a well-formed IPv4 address; skipping it...'.format(ipv4))
-                continue
+            ipv4 = ipaddress.ip_address(ipv4)    
             
             # Verify if IP address is within the LAN and/or is duplicate    
             if ipv4 not in self.vlan_cidr_network:

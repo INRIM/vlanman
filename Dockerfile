@@ -26,20 +26,19 @@ FROM python:alpine
 LABEL maintainer="d.pilori@inrim.it"
 VOLUME ["/var/lib/dhcp-config-gen"]
 
-# Copy credentials to Google
+# Copy Google credentials for gspread
 RUN mkdir -p /root/.config/gspread
 COPY service_account.json /root/.config/gspread/service_account.json
 
-# Create program dir and enter
+# Create program dir and copy files
 WORKDIR /usr/src/dhcp-config-gen
-COPY dhcp_config_generator.py ./
-COPY requirements.txt ./
-COPY vlan.py ./
-COPY list_vlans.json ./
+COPY dhcp_config_generator.py vlan.py requirements.txt ./
 
 # Install requirements
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Execute program
-ENTRYPOINT ["python", "./dhcp_config_generator.py", "-o", "/var/lib/dhcp-config-gen", "-l", "/var/lib/dhcp-config-gen/output.log"]
-
+ENTRYPOINT ["python", "./dhcp_config_generator.py", \
+            "-o", "/var/lib/dhcp-config-gen", \
+            "-l", "/var/lib/dhcp-config-gen/output.log", \
+            "-c", "/var/lib/dhcp-config-gen/list_vlans.json"]

@@ -29,8 +29,57 @@ optional arguments:
                         Log file.
 ```
 
-## Installation
+### Google Sheet format
+The Google Sheet file *must* have the following structure:
+- On each row there's a single host to be registered.
+- The first row contains the labels of each column.
+- At least, the following columns must be present: `Hostname`, `Mac Address`, `IPv4 address` and `Note/commenti`.
+- Everything else is ignored.
 
+Each row containing an hostname, a MAC address and an IPv4 address is evaluated. Others are discarded.
+If any hostname, MAC Address or IPv4 address is not valid, the software triggers an error and it
+skips **the entire VLAN**. This is meant to always have a consistent and fully-valid DHCPd configuration for every VLAN,
+even if the configuration is slightly outdated.
+
+## Installation with Docker
+This software has been designed to be run periodically (e.g. with cron) using a [Docker](https://www.docker.com/) container.
+
+1. Create a Google Service account with read access to the wanted Google Sheets file, and download the credentials into a JSON
+   file called `service_account.json`. You can follow the steps from the Gspread documentation: https://gspread.readthedocs.io/en/latest/oauth2.html.
+2. Install the latest version of Docker CE for your distribution: https://docs.docker.com/engine/install/.
+3. Create a Docker [volume](https://docs.docker.com/storage/volumes/), which will contain:
+   - The configuration file, with the list of VLAN and their associated Google Sheets file.
+   - The output DHCPd configuration files.
+```bash
+docker volume create gsheets-dhcp-generator   
+```
+4. Create a configuration JSON file, containing the list of the VLANs and their associated informations. This file will be called `list_vlans.json`. For example:
+```json
+[
+    {
+        "vlan_id": 999,
+        "ip_network": "192.0.2.0/24",
+        "sheet_name": "TEST_VLAN999",
+        "dhcpd_out_file": "vlan_999.conf",
+        "comment": "Test VLAN 999"    
+    },
+    [...]
+]
+```
+5. Copy the configuration JSON file to the Docker volume created before. E.g.:
+```bash
+cp list_vlans.json /var/lib/docker/volumes/gsheets-dhcp-generator/_data
+```
+6. Clone this repository and build a Docker image
+```bash
+docker build -t gsheets-dhcp-gen .
+```
+7. Once created the image, you can *manually* build the new configurations with the following command:
+```bash
+docker run --rm -v gsheets-dhcp-generator:/var/lib/dhcp-config-gen gsheets-dhcp-gen
+```
+  The files and the logfile will be created inside the Docker volume, i.e. in `/var/lib/docker/volumes/gsheets-dhcp-generator`.
+8. The command written previously can be scripted, e.g. using crontab, to periodically generate new configuration.
 
 ## TODO
 Integrate with VlanMan to automatically add the MAC addresses to the RADIUS server for MAC-authentication.

@@ -42,7 +42,9 @@ cli_parser.add_argument("-o", "--output-dir",
 cli_parser.add_argument("-c", "--config-json",
                        help="JSON-formatted configuration file.", metavar="JSON_FILE", default="list_vlans.json")
 cli_parser.add_argument("-l", "--log-file",
-                       help="Log file.", default="output.log")                       
+                       help="Log file.", default="output.log")     
+cli_parser.add_argument("-v", "--verbose",
+                       help="Be verbose.", action='store_true')                                             
 args = cli_parser.parse_args()
 
 # Set up logging
@@ -51,6 +53,10 @@ dhcp_logger.setLevel(logging.INFO)
 handler = logging.handlers.TimedRotatingFileHandler(args.log_file, when='W0', backupCount=10)
 handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(message)s'))
 dhcp_logger.addHandler(handler)
+if args.verbose:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(message)s'))
+    dhcp_logger.addHandler(handler)
 
 # Load configuration file
 with open(args.config_json, 'r') as f:
@@ -60,13 +66,15 @@ with open(args.config_json, 'r') as f:
 for v in list_vlan:
     # Get info from Google Drive
     try:
-        v.retrieve_data()
+    #    v.retrieve_data()
+         pass
     except Exception as exc:
         logging.error('Unable to retrieve data from Google for VLAN {} due to error "{}"'.format(v.vlan_id, exc))
 
     # Generate and save configuration
     try:
-        v.generate_dhcp_config()
+    #    v.generate_dhcp_config()
+        v.generate_dhcp_config('test/test_vlan.json')
         v.dump_to_dhcpd(out_dir=args.output_dir)
         dhcp_logger.info('Successfully parsed VLAN {}'.format(v.vlan_id))
     except Exception as exc:

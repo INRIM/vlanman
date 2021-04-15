@@ -81,5 +81,19 @@ docker run --rm -v gsheets-dhcp-generator:/var/lib/dhcp-config-gen gsheets-dhcp-
   The files and the logfile will be created inside the Docker volume, i.e. in `/var/lib/docker/volumes/gsheets-dhcp-generator`.
 8. The command written previously can be scripted, e.g. using crontab, to periodically generate new configuration.
 
+### Periodic update with systemd timer
+A good solution is the use of [systemd timers](https://wiki.archlinux.org/index.php/Systemd/Timers) to periodically
+update the configuraiton files. In the `systemd` directory there are scripts to help doing so. To install them:
+1. Copy `gsheets-dhcp-gen.service` and `gsheets-dhcp-gen.timer` to `/etc/systemd/system`.
+2. Copy `gsheets-dhcp-gen.sh` to `/usr/local/bin`.
+3. Reload systemd:
+```bash
+systemctl daemon-reload
+```
+4. Enable systemd timer
+```bash
+systemctl --now enable gsheets-dhcp-gen.timer
+```
+
 ## TODO
 Integrate with VlanMan to automatically add the MAC addresses to the RADIUS server for MAC-authentication.

@@ -66,15 +66,13 @@ with open(args.config_json, 'r') as f:
 for v in list_vlan:
     # Get info from Google Drive
     try:
-    #    v.retrieve_data()
-         pass
+         v.retrieve_data()
     except Exception as exc:
         logging.error('Unable to retrieve data from Google for VLAN {} due to error "{}"'.format(v.vlan_id, exc))
 
     # Generate and save configuration
     try:
-    #    v.generate_dhcp_config()
-        v.generate_dhcp_config('test/test_vlan.json')
+        v.generate_dhcp_config()
         v.dump_to_dhcpd(out_dir=args.output_dir)
         dhcp_logger.info('Successfully parsed VLAN {}'.format(v.vlan_id))
     except Exception as exc:

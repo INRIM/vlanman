@@ -30,7 +30,7 @@ VOLNAME="gsheets-dhcp-generator"
 DHCP_CONF_DIR="/etc/dhcp/reservations/"
 
 # Get a new config 
-/usr/bin/docker run --rm -v ${VOLNAME}:/var/lib/dhcp-config-gen dhcp_config_generator -v
+/usr/bin/docker run --rm -v ${VOLNAME}:/var/lib/dhcp-config-gen gsheets-dhcp-gen -v
 
 # Copy the config to the DHCPd configuration dir, making a backup of old files
 cp -b --suffix=".old" /var/lib/docker/volumes/${VOLNAME}/_data/*.conf ${DHCP_CONF_DIR}

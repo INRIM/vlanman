@@ -97,6 +97,10 @@ class Vlan:
             mac = host['Mac Address'].strip()
             ipv4 = host['IPv4 address'].strip()
             comments = host['Note/commenti'].strip()
+            oss = host['Sistema operativo'].strip()
+            responsible = host['Referente'].strip()
+            room = host['Stanza'].strip()
+            description = host['Descrizione'].strip()
             
             # If any of those is empty, skip without raising anything
             if not (hostname and mac and ipv4):
@@ -129,7 +133,11 @@ class Vlan:
             self.dhcp_config.append({'hostname': hostname,
                                'mac': mac,
                                'ipv4': ipv4,
-                               'comments': comments})
+                               'comments': comments,
+                               'oss': oss,
+                               'responsible': responsible,
+                               'room': room,
+                               'description': description})
 
     def dump_to_dhcpd(self, out_dir=''):
         """ Dump configuration to a DHCPd configuration file """
@@ -145,6 +153,7 @@ class Vlan:
         with open(out_file, 'w') as f:
             for host in self.dhcp_config:      
                 # Generate DHCPd configuration
+                f.write('# {} [{}]\n# {}, {}\n'.format(host['responsible'], host['room'], host['oss'], host['description']))
                 if host['comments']:    
                     f.write('# {}\n'.format(host['comments']))
                 f.write('host {} {{\n  hardware ethernet {};\n  fixed-address {};\n}}\n\n'.format(host['hostname'], host['mac'],

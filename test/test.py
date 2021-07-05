@@ -1,6 +1,6 @@
-# Test the vlan class.
+# Test the Vlan class.
 #
-# Copyright (c) 2021 Dario Pilori - INRiM <d.pilori@inrim.it>
+# Copyright (c) 2021 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

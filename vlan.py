@@ -1,7 +1,7 @@
 # Basic class to manipulate a single VLAN: retrieve config from Google Sheets,
 # create/dump to JSON, generate and validate a DHCP configuration.
 #
-# Copyright (c) 2021 Dario Pilori - INRiM <d.pilori@inrim.it>
+# Copyright (c) 2021 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@ import re
 import netaddr
 import ipaddress
 import os.path
+import mysql.connector
 
 # Simple regex to validate a hostname
 _HOSTNAME_REGEX = '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
@@ -158,5 +159,86 @@ class Vlan:
                     f.write('# {}\n'.format(host['comments']))
                 f.write('host {} {{\n  hardware ethernet {};\n  fixed-address {};\n}}\n\n'.format(host['hostname'], host['mac'],
                         host['ipv4']))                               
-                               
+
+    def generate_radius_config(self, json_in=''):
+        """ Validate MAC address and prepare a list of MAC addresses to put into a RADIUS config. """                           
+        # If given, retrieve file from JSON
+        if json_in:
+            with open(json_in, 'r') as f:
+                self.sheet_records = json.load(f)
+        
+        # Verify if the data has been retrieved from Google
+        if not self.sheet_records:
+            raise Exception('No data from Google Sheets. Please retrieve it before with retrieve_data().')
+        
+        # Create set of MAC addresses to avoid duplicates
+        self.radius_config = set()
+
+        for host in self.sheet_records:
+            # Extract info from dictionary
+            mac = host['Mac Address'].strip()
+
+            # If empty, continue
+            if not mac:
+                continue
+            
+            # Validate and store MAC address
+            mac = netaddr.EUI(mac)
+            if mac not in radius_config:
+                radius_config.add(mac)
+            else:
+                raise Exception('Duplicated MAC addess')
     
+    def dump_to_radius_mysql(self, mysql_user, mysql_password, mysql_host, mysql_db):
+        """ Dump the valudated set of MAC addresses to the MySQL FreeRADIUS database. """                           
+        if not self.radius_config:
+            raise Exception('No RADIUS config. Please run generate_radius_config() to generate a valid config.')
+    
+        # Open connection and cursor
+        cnx = mysql.connector.connect(user=mysql_user, password=mysql_password,
+                                  host=mysql_host,
+                                  database=mysql_db)
+        cur = cnx.cursor()
+
+        # Get all current Mac Addresses from the database into a set
+        cur.execute('SELECT username FROM radcheck')
+        current_mac_addresses = set()
+        for (mac, ) in cur:
+            current_mac_addresses.add(netaddr.EUI(mac))
+
+        # Now process every content in Google Sheets, adding/removing it from the database
+        add_new_mac_radcheck = ("INSERT INTO radcheck "
+            "(username, attribute, op, value) "
+            "VALUES (%s, %s, %s, %s)")
+        add_new_mac_radreply = ("INSERT INTO radreply "
+            "(username, attribute, op, value) "
+            "VALUES (%s, %s, %s, %s)")
+
+        for mac in self.radius_config:
+            # Check if existing, then continue
+            if mac in current_mac_addresses:
+                current_mac_addresses.remove(mac)
+                continue
+
+            # If it does not exist, then add it to the authentication database
+            mac_format = mac.format(dialect=netaddr.mac_bare).lower()
+            cur.execute(add_new_mac_radcheck, (mac_format, 'Cleartext-Password', ':=', mac_format))
+
+            # Remove any previous VLAN, and add the VLAN to the authorization database
+            cur.execute('DELETE FROM radreply WHERE username="%s" AND attribute="%s"',
+                    (mac_format, 'Tunnel-Private-Group-ID'))
+            cur.execute(add_new_mac_radreply, 
+                    (mac_format, 'Tunnel-Private-Group-ID', ':=', vlan_id))
+
+        # Now remove all old MAC addresses
+        for mac in mac_addresses:
+            mac_format = mac.format(dialect=netaddr.mac_bare).lower()
+            cur.execute('DELETE FROM radcheck WHERE username="{}"'.format(mac_format))
+            cur.execute('DELETE FROM radreply WHERE username="{}"'.format(mac_format))
+    
+        # Commit all changes
+        cnx.commit()
+
+        # Close all
+        cur.close()
+        cnx.close()

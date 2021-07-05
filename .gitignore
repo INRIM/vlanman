@@ -1,3 +1,10 @@
+# Other directories
+.vscode/
+experiments/
+
+# This is a mere configuration file
+list_vlans.json
+
 # Temporary JSON files
 vlan*.json
 

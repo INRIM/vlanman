@@ -184,8 +184,8 @@ class Vlan:
             
             # Validate and store MAC address
             mac = netaddr.EUI(mac)
-            if mac not in radius_config:
-                radius_config.add(mac)
+            if mac not in self.radius_config:
+                self.radius_config.add(mac)
             else:
                 raise Exception('Duplicated MAC addess')
     
@@ -228,10 +228,10 @@ class Vlan:
             cur.execute('DELETE FROM radreply WHERE username="%s" AND attribute="%s"',
                     (mac_format, 'Tunnel-Private-Group-ID'))
             cur.execute(add_new_mac_radreply, 
-                    (mac_format, 'Tunnel-Private-Group-ID', ':=', vlan_id))
+                    (mac_format, 'Tunnel-Private-Group-ID', ':=', self.vlan_id))
 
         # Now remove all old MAC addresses
-        for mac in mac_addresses:
+        for mac in current_mac_addresses:
             mac_format = mac.format(dialect=netaddr.mac_bare).lower()
             cur.execute('DELETE FROM radcheck WHERE username="{}"'.format(mac_format))
             cur.execute('DELETE FROM radreply WHERE username="{}"'.format(mac_format))

@@ -1,5 +1,6 @@
 # Other directories
 .vscode/
+experiments/
 
 # MySQL settings
 mysql_settings.json

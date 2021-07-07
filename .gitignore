@@ -1,6 +1,8 @@
 # Other directories
 .vscode/
-experiments/
+
+# MySQL settings
+mysql_settings.json
 
 # This is a mere configuration file
 list_vlans.json

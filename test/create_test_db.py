@@ -38,7 +38,7 @@ cli_parser.add_argument("-d", "--database",
                        help="MySQL database name", default="radius")
 args = cli_parser.parse_args()
 
-# Build a test mysql_settings.json
+# Build a test_mysql_settings.json for future unit testing
 mysql_settings = dict()
 mysql_settings['database'] = args.database
 mysql_settings['host'] = args.host

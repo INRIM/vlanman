@@ -29,10 +29,33 @@ import unittest
 from vlan import Vlan
 import filecmp
 import json
+import mysql.connector
+import netaddr
 
 class TestVlan(unittest.TestCase):
     def compare_databases(self, mysql_settings, json_in):
-        return True
+        # Get all Mac Addresses of this VLAN from the database into a set
+        cnx = mysql.connector.connect(**mysql_settings)
+        cur = cnx.cursor()
+        cur.execute('SELECT radcheck.username FROM radcheck '
+            'INNER JOIN radreply ON radcheck.username=radreply.username '
+            'WHERE radreply.value="{}" '
+            'AND radreply.attribute="Tunnel-Private-Group-ID"'.format(601))
+        mysql_mac_addresses = set()
+        for (mac, ) in cur:
+            mysql_mac_addresses.add(netaddr.EUI(mac))
+        cur.close()
+        cnx.close()
+
+        # Load MAC addresses from JSON
+        with open(json_in, 'r') as f:
+            test_vlan_json = json.load(f)
+        json_mac_addresses = set()
+        for host in test_vlan_json:
+            json_mac_addresses.add(netaddr.EUI(host['Mac Address']))
+
+        return json_mac_addresses == mysql_mac_addresses
+
 
     def test_dhcp_validation(self):
         """ Import a test vlan JSON and verify that the output DHCP config is correct. """

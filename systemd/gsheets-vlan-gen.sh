@@ -1,9 +1,9 @@
 #!/bin/bash
 # Script to be run by cron or systemd timer, to periodically
-# run, using Docker, dhcp_config_generator, and copy the new
+# run, using Docker, dhcp_config_generator.py, and copy the new
 # configuration to ISC DHCPd configuration directory.
 #
-# Copyright (c) 2021 Dario Pilori - INRiM <d.pilori@inrim.it>
+# Copyright (c) 2021 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,11 @@
 # SPDX-License-Identifier: MIT
 
 # Configuration parameters
-VOLNAME="gsheets-dhcp-generator"
+VOLNAME="gsheets-vlan-gen"
 DHCP_CONF_DIR="/etc/dhcp/reservations/"
 
 # Get a new config 
-/usr/bin/docker run --rm -v ${VOLNAME}:/var/lib/dhcp-config-gen gsheets-dhcp-gen -v
+/usr/bin/docker run --rm -v ${VOLNAME}:/var/lib/dhcp-config-gen gsheets-vlan-gen -v
 
 # Copy the config to the DHCPd configuration dir, making a backup of old files
 cp -b --suffix=".old" /var/lib/docker/volumes/${VOLNAME}/_data/*.conf ${DHCP_CONF_DIR}

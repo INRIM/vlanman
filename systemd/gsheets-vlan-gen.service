@@ -1,0 +1,7 @@
+[Unit]
+Description=Update VLAN config from GSheets
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/gsheets-vlan-gen.sh
+

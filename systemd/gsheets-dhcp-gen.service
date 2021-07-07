@@ -1,7 +1,0 @@
-[Unit]
-Description=Update DHCPd config from GSheets
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/gsheets-dhcp-gen.sh
-

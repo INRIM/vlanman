@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily update DHCPd config from GSheets
+Description=Daily update VLAN config from GSheets
 
 [Timer]
 OnCalendar=daily

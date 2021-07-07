@@ -1,5 +1,6 @@
 # Basic class to manipulate a single VLAN: retrieve config from Google Sheets,
-# create/dump to JSON, generate and validate a DHCP configuration.
+# create/dump to JSON, generate and validate a DHCP configuration, generate
+# and validate a FreeRADIUS configuration on a MySQL database.
 #
 # Copyright (c) 2021 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
 #

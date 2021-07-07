@@ -24,6 +24,7 @@
 
 import argparse
 import mysql.connector
+import json
 
 # Parse command line arguments
 cli_parser = argparse.ArgumentParser(description="Create a test MySQL database.")
@@ -37,8 +38,17 @@ cli_parser.add_argument("-d", "--database",
                        help="MySQL database name", default="radius")
 args = cli_parser.parse_args()
 
+# Build a test mysql_settings.json
+mysql_settings = dict()
+mysql_settings['database'] = args.database
+mysql_settings['host'] = args.host
+mysql_settings['password'] = args.password
+mysql_settings['user'] = args.user
+with open('test_mysql_settings.json', 'w') as f:
+    json.dump(mysql_settings, f)
+
 # Connect to MySQL
-cnx = mysql.connector.connect(database=args.database, user=args.user, password=args.password, host=args.host)
+cnx = mysql.connector.connect(**mysql_settings)
 cur = cnx.cursor()
 
 # Load MySQL schema

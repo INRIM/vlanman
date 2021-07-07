@@ -189,15 +189,15 @@ class Vlan:
             else:
                 raise Exception('Duplicated MAC addess')
     
-    def dump_to_radius_mysql(self, mysql_user, mysql_password, mysql_host, mysql_db, verbose=False):
+    def dump_to_radius_mysql(self, user, password, host, database, verbose=False):
         """ Dump the valudated set of MAC addresses to the MySQL FreeRADIUS database. """                           
         if not self.radius_config:
             raise Exception('No RADIUS config. Please run generate_radius_config() to generate a valid config.')
     
         # Open connection and cursor
-        cnx = mysql.connector.connect(user=mysql_user, password=mysql_password,
-                                  host=mysql_host,
-                                  database=mysql_db)
+        cnx = mysql.connector.connect(user=user, password=password,
+                                  host=host,
+                                  database=database)
         cur = cnx.cursor()
 
         # Get all current Mac Addresses from the database into a set

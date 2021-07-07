@@ -33,7 +33,6 @@ import logging.handlers
 def get_vlan_from_json(dct):
     """ Simple hook to convert a dictionary from JSON a Vlan object. """
     return Vlan(**dct)
-
    
 # Parse command line arguments
 cli_parser = argparse.ArgumentParser(description="Generate a set of ISC DHCPd configuration files and synchronize FreeRADIUS from Google Sheets files.")
@@ -41,6 +40,8 @@ cli_parser.add_argument("-o", "--output-dir",
                        help="Output dir for DHCPd configuration files.", metavar="DIR", default=".")
 cli_parser.add_argument("-c", "--list-vlans",
                        help="JSON-formatted list of VLANs.", metavar="JSON_LIST_VLANS", default="list_vlans.json")
+cli_parser.add_argument("-d", "--mysql-config",
+                       help="JSON-formatted MySQL configuration.", metavar="JSON_MYSQL_SETTINGS", default="mysql_settings.json")
 cli_parser.add_argument("-l", "--log-file",
                        help="Log file.", default="output.log")     
 cli_parser.add_argument("-v", "--verbose",
@@ -76,5 +77,13 @@ for v in list_vlan:
         v.dump_to_dhcpd(out_dir=args.output_dir)
         dhcp_logger.info('Successfully parsed VLAN {}'.format(v.vlan_id))
     except Exception as exc:
-        dhcp_logger.error('Skipping vlan {} due to {} error: "{}".'.format(v.vlan_id, type(exc).__name__, exc))
+        dhcp_logger.error('Skipping DHCP config of vlan {} due to {} error: "{}".'.format(v.vlan_id, type(exc).__name__, exc))
 
+    # Generate and save VLAN configuration
+    try:
+        v.generate_radius_config()
+        with open(args.mysql_settings, 'r') as f:
+            mysql_settings = json.load(f)
+        v.dump_to_radius_mysql(**mysql_settings, verbose=True)
+    except Exception as exc:
+        dhcp_logger.error('Skipping RADIUS config of vlan {} due to {} error: "{}".'.format(v.vlan_id, type(exc).__name__, exc))

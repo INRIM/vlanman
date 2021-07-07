@@ -40,8 +40,8 @@ cli_parser.add_argument("-o", "--output-dir",
                        help="Output dir for DHCPd configuration files.", metavar="DIR", default=".")
 cli_parser.add_argument("-c", "--list-vlans",
                        help="JSON-formatted list of VLANs.", metavar="JSON_LIST_VLANS", default="list_vlans.json")
-cli_parser.add_argument("-d", "--mysql-config",
-                       help="JSON-formatted MySQL configuration.", metavar="JSON_MYSQL_SETTINGS", default="mysql_settings.json")
+cli_parser.add_argument("-d", "--mysql-settings",
+                       help="JSON-formatted MySQL settings.", metavar="JSON_MYSQL_SETTINGS", default="mysql_settings.json")
 cli_parser.add_argument("-l", "--log-file",
                        help="Log file.", default="output.log")     
 cli_parser.add_argument("-v", "--verbose",
@@ -60,7 +60,7 @@ if args.verbose:
     dhcp_logger.addHandler(handler)
 
 # Load configuration file
-with open(args.config_json, 'r') as f:
+with open(args.list_vlans, 'r') as f:
     list_vlan = json.load(f, object_hook=get_vlan_from_json)
 
 # For all VLANS

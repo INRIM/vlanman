@@ -39,8 +39,8 @@ def get_vlan_from_json(dct):
 cli_parser = argparse.ArgumentParser(description="Generate a set of ISC DHCPd configuration files and synchronize FreeRADIUS from Google Sheets files.")
 cli_parser.add_argument("-o", "--output-dir",
                        help="Output dir for DHCPd configuration files.", metavar="DIR", default=".")
-cli_parser.add_argument("-c", "--config-json",
-                       help="JSON-formatted configuration file.", metavar="JSON_FILE", default="list_vlans.json")
+cli_parser.add_argument("-c", "--list-vlans",
+                       help="JSON-formatted list of VLANs.", metavar="JSON_LIST_VLANS", default="list_vlans.json")
 cli_parser.add_argument("-l", "--log-file",
                        help="Log file.", default="output.log")     
 cli_parser.add_argument("-v", "--verbose",

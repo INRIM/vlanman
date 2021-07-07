@@ -24,7 +24,7 @@
 
 FROM python:alpine
 LABEL maintainer="d.pilori@inrim.it"
-VOLUME ["/var/lib/dhcp-config-gen"]
+VOLUME ["/var/lib/vlan-config-gen"]
 
 # Copy Google credentials for gspread
 RUN mkdir -p /root/.config/gspread
@@ -38,7 +38,7 @@ COPY dhcp_config_generator.py vlan.py requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Execute program
-ENTRYPOINT ["python", "./dhcp_config_generator.py", \
-            "-o", "/var/lib/dhcp-config-gen", \
-            "-l", "/var/lib/dhcp-config-gen/output.log", \
-            "-c", "/var/lib/dhcp-config-gen/list_vlans.json"]
+ENTRYPOINT ["python", "./vlan_config_generator.py", \
+            "-o", "/var/lib/vlan-config-gen", \
+            "-l", "/var/lib/vlan-config-gen/output.log", \
+            "-c", "/var/lib/vlan-config-gen/list_vlans.json"]

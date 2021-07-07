@@ -16,7 +16,7 @@ This software is divided into two files:
 The script can be used with the following options:
 ```bash
 $ ./vlan_config_generator.py -h
-usage: vlan_config_generator.py [-h] [-o DIR] [-c JSON_FILE] [-l LOG_FILE]
+usage: vlan_config_generator.py [-h] [-o DIR] [-c JSON_LIST_VLANS] [-l LOG_FILE]
 
 Generate a set of ISC DHCPd configuration files and synchronize FreeRADIUS from Google Sheets files
 
@@ -24,8 +24,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -o DIR, --output-dir DIR
                         Output dir for DHCPd configuration files.
-  -c JSON_FILE, --config-json JSON_FILE
-                        JSON-formatted configuration file.
+  -c JSON_LIST_VLANS, --list-vlans JSON_LIST_VLANS
+                        JSON-formatted list of VLANs.
   -l LOG_FILE, --log-file LOG_FILE
                         Log file.
 ```

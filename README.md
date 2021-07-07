@@ -82,7 +82,7 @@ docker build -t gsheets-vlan-gen .
 ```
 7. Once created the image, you can *manually* build the new configurations with the following command:
 ```bash
-docker run --rm -v gsheets-vlan-gen:/var/lib/dhcp-config-gen gsheets-vlan-gen
+docker run --rm -v gsheets-vlan-gen:/var/lib/vlan-config-gen gsheets-vlan-gen
 ```
   The files and the logfile will be created inside the Docker volume, i.e. in `/var/lib/docker/volumes/gsheets-vlan-gen`.
 8. The command written previously can be scripted, e.g. using crontab, to periodically generate new configuration.

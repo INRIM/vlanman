@@ -70,7 +70,7 @@ for v in list_vlan:
     except Exception as exc:
         logging.error('Unable to retrieve data from Google for VLAN {} due to error "{}"'.format(v.vlan_id, exc))
 
-    # Generate and save configuration
+    # Generate and save DHCP configuration
     try:
         v.generate_dhcp_config()
         v.dump_to_dhcpd(out_dir=args.output_dir)

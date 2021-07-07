@@ -189,7 +189,7 @@ class Vlan:
             else:
                 raise Exception('Duplicated MAC addess')
     
-    def dump_to_radius_mysql(self, mysql_user, mysql_password, mysql_host, mysql_db):
+    def dump_to_radius_mysql(self, mysql_user, mysql_password, mysql_host, mysql_db, verbose=False):
         """ Dump the valudated set of MAC addresses to the MySQL FreeRADIUS database. """                           
         if not self.radius_config:
             raise Exception('No RADIUS config. Please run generate_radius_config() to generate a valid config.')
@@ -201,40 +201,53 @@ class Vlan:
         cur = cnx.cursor()
 
         # Get all current Mac Addresses from the database into a set
-        cur.execute('SELECT username FROM radcheck')
+        cur.execute('SELECT radcheck.username FROM radcheck '
+            'INNER JOIN radreply ON radcheck.username=radreply.username '
+            'WHERE radreply.value="{}" '
+            'AND radreply.attribute="Tunnel-Private-Group-ID"'.format(self.vlan_id))
         current_mac_addresses = set()
         for (mac, ) in cur:
             current_mac_addresses.add(netaddr.EUI(mac))
 
         # Now process every content in Google Sheets, adding/removing it from the database
-        add_new_mac_radcheck = ("INSERT INTO radcheck "
-            "(username, attribute, op, value) "
-            "VALUES (%s, %s, %s, %s)")
-        add_new_mac_radreply = ("INSERT INTO radreply "
-            "(username, attribute, op, value) "
-            "VALUES (%s, %s, %s, %s)")
-
         for mac in self.radius_config:
             # Check if existing, then continue
             if mac in current_mac_addresses:
                 current_mac_addresses.remove(mac)
                 continue
 
-            # If it does not exist, then add it to the authentication database
+            # Format MAC address as wanted by Aruba switches
             mac_format = mac.format(dialect=netaddr.mac_bare).lower()
-            cur.execute(add_new_mac_radcheck, (mac_format, 'Cleartext-Password', ':=', mac_format))
+   
+            # Check if host is currently present on a different VLAN, and, if so, remove it
+            cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
+            if cur.rowcount >= 0 and verbose:
+                print('Host "{}" is already present on a different VLAN; removing it...'.format(mac))
+            cur.execute(('DELETE FROM radreply WHERE username = %s AND attribute = %s'),
+                (mac_format, 'Tunnel-Private-Group-ID'))
+
+            # If it does not exist, then add it to the authentication database
+            cur.execute(('INSERT INTO radcheck '
+                '(username, attribute, op, value) '
+                'VALUES (%s, %s, %s, %s)'),
+                (mac_format, 'Cleartext-Password', ':=', mac_format))
 
             # Remove any previous VLAN, and add the VLAN to the authorization database
-            cur.execute('DELETE FROM radreply WHERE username="%s" AND attribute="%s"',
-                    (mac_format, 'Tunnel-Private-Group-ID'))
-            cur.execute(add_new_mac_radreply, 
-                    (mac_format, 'Tunnel-Private-Group-ID', ':=', self.vlan_id))
+            cur.execute(('INSERT INTO radreply '
+                '(username, attribute, op, value) '
+                'VALUES (%s, %s, %s, %s)'),
+                (mac_format, 'Tunnel-Private-Group-ID', ':=', self.vlan_id))
+
+            if cur.rowcount >= 0 and verbose:
+                print('Adding host {} to VLAN {}...'.format(mac, self.vlan_id))
 
         # Now remove all old MAC addresses
         for mac in current_mac_addresses:
             mac_format = mac.format(dialect=netaddr.mac_bare).lower()
-            cur.execute('DELETE FROM radcheck WHERE username="{}"'.format(mac_format))
-            cur.execute('DELETE FROM radreply WHERE username="{}"'.format(mac_format))
+            cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
+            cur.execute(('DELETE FROM radreply WHERE username = %s'), (mac_format,))
+            if verbose:
+                print('Removing host {} from VLAN {}...'.format(mac, self.vlan_id))
     
         # Commit all changes
         cnx.commit()

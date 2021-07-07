@@ -31,19 +31,33 @@ cli_parser.add_argument("-u", "--user",
                        help="MySQL user", default="radius")
 cli_parser.add_argument("-p", "--password",
                        help="MySQL password", default="password")
-cli_parser.add_argument("-h", "--host",
+cli_parser.add_argument("-s", "--host",
                        help="MySQL host", default="mysql")
-cli_parser.add_argument("-d", "--db",
+cli_parser.add_argument("-d", "--database",
                        help="MySQL database name", default="radius")
 args = cli_parser.parse_args()
 
 # Connect to MySQL
-cnx = mysql.connector.connect(database=args.db, user=args.user, password=args.password, host=args.host)
+cnx = mysql.connector.connect(database=args.database, user=args.user, password=args.password, host=args.host)
 cur = cnx.cursor()
 
 # Load MySQL schema
 with open('mysql_freeradius3_schema.sql', 'r') as f:
-    cur.execute(f.read())
+    sql_file = f.read()
+
+# all SQL commands (split on ';')
+sql_cmds = sql_file.split(';')
+
+# Execute every sql_cmds from the input file
+for cmd in sql_cmds:
+    # This will skip and report errors
+    # For example, if the tables do not yet exist, this will skip over
+    # the DROP TABLE commands
+    try:
+        if cmd.rstrip() != '':
+            cur.execute(cmd)
+    except ValueError as msg:
+        print('Command skipped: {}'.format(msg))
 
 # Commit these changes
 cnx.commit()

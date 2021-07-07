@@ -190,7 +190,7 @@ class Vlan:
             else:
                 raise Exception('Duplicated MAC addess')
     
-    def dump_to_radius_mysql(self, user, password, host, database, print_function=print()):
+    def dump_to_radius_mysql(self, user, password, host, database, print_function=print):
         """ Dump the valudated set of MAC addresses to the MySQL FreeRADIUS database. """                           
         if not self.radius_config:
             raise Exception('No RADIUS config. Please run generate_radius_config() to generate a valid config.')

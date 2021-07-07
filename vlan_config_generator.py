@@ -84,6 +84,6 @@ for v in list_vlan:
         v.generate_radius_config()
         with open(args.mysql_settings, 'r') as f:
             mysql_settings = json.load(f)
-        v.dump_to_radius_mysql(**mysql_settings, verbose=True)
+        v.dump_to_radius_mysql(**mysql_settings, print_function=dhcp_logger.info)
     except Exception as exc:
         dhcp_logger.error('Skipping RADIUS config of vlan {} due to {} error: "{}".'.format(v.vlan_id, type(exc).__name__, exc))

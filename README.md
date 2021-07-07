@@ -16,9 +16,9 @@ This software is divided into two files:
 The script can be used with the following options:
 ```bash
 $ ./vlan_config_generator.py -h
-usage: vlan_config_generator.py [-h] [-o DIR] [-c JSON_LIST_VLANS] [-l LOG_FILE]
+usage: vlan_config_generator.py [-h] [-o DIR] [-c JSON_LIST_VLANS] [-d JSON_MYSQL_SETTINGS] [-l LOG_FILE] [-v]
 
-Generate a set of ISC DHCPd configuration files and synchronize FreeRADIUS from Google Sheets files
+Generate a set of ISC DHCPd configuration files and synchronize FreeRADIUS from Google Sheets files.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -26,8 +26,11 @@ optional arguments:
                         Output dir for DHCPd configuration files.
   -c JSON_LIST_VLANS, --list-vlans JSON_LIST_VLANS
                         JSON-formatted list of VLANs.
+  -d JSON_MYSQL_SETTINGS, --mysql-settings JSON_MYSQL_SETTINGS
+                        JSON-formatted MySQL settings.
   -l LOG_FILE, --log-file LOG_FILE
                         Log file.
+  -v, --verbose         Be verbose.
 ```
 
 ### Google Sheet format
@@ -49,7 +52,8 @@ This software has been designed to be run periodically (e.g. with cron) using a 
    file called `service_account.json`. You can follow the steps from the Gspread documentation: https://gspread.readthedocs.io/en/latest/oauth2.html.
 2. Install the latest version of Docker CE for your distribution: https://docs.docker.com/engine/install/.
 3. Create a Docker [volume](https://docs.docker.com/storage/volumes/), which will contain:
-   - The configuration file, with the list of VLAN and their associated Google Sheets file.
+   - The configuration file, with the list of VLANs and their associated Google Sheets file.
+   - The MySQL settings.
    - The output DHCPd configuration files.
 ```bash
 docker volume create gsheets-vlan-gen   
@@ -67,9 +71,10 @@ docker volume create gsheets-vlan-gen
     [...]
 ]
 ```
-5. Copy the configuration JSON file to the Docker volume created before. E.g.:
+5. Copy the JSON files containing the list of VLANs and the MySQL connection settings to the Docker volume created before. E.g.:
 ```bash
 cp list_vlans.json /var/lib/docker/volumes/gsheets-vlan-gen/_data
+cp mysql_settings.json /var/lib/docker/volumes/gsheets-vlan-gen/_data
 ```
 6. Clone this repository and build a Docker image
 ```bash

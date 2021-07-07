@@ -1,4 +1,4 @@
-# Dockerfile to run dhcp_config_generator
+# Dockerfile to run vlan_config_generator
 #
 # Copyright (c) 2021 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
 #
@@ -31,8 +31,8 @@ RUN mkdir -p /root/.config/gspread
 COPY service_account.json /root/.config/gspread/service_account.json
 
 # Create program dir and copy files
-WORKDIR /usr/src/dhcp-config-gen
-COPY dhcp_config_generator.py vlan.py requirements.txt ./
+WORKDIR /usr/src/vlan-config-gen
+COPY vlan_config_generator.py vlan.py requirements.txt ./
 
 # Install requirements
 RUN pip install --no-cache-dir -r requirements.txt
@@ -41,4 +41,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENTRYPOINT ["python", "./vlan_config_generator.py", \
             "-o", "/var/lib/vlan-config-gen", \
             "-l", "/var/lib/vlan-config-gen/output.log", \
-            "-c", "/var/lib/vlan-config-gen/list_vlans.json"]
+            "-c", "/var/lib/vlan-config-gen/list_vlans.json", \
+            "-d", "/var/lib/vlan-config-gen/mysql_settings.json"]

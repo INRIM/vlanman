@@ -31,6 +31,9 @@ import filecmp
 import json
 
 class TestVlan(unittest.TestCase):
+    def compare_databases(self, mysql_settings, json_in):
+        return True
+
     def test_dhcp_validation(self):
         """ Import a test vlan JSON and verify that the output DHCP config is correct. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
@@ -45,7 +48,7 @@ class TestVlan(unittest.TestCase):
         with open('test_mysql_settings.json', 'r') as f:
                 mysql_settings = json.load(f)
         vlan_test.dump_to_radius_mysql(**mysql_settings)
-        self.assertTrue(True)
+        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan.json'))
     
 if __name__ == '__main__':
     unittest.main()

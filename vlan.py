@@ -222,7 +222,7 @@ class Vlan:
    
             # Check if host is currently present on a different VLAN, and, if so, remove it
             cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
-            if cur.rowcount >= 0:
+            if cur.rowcount >= 1:
                 print_function('Host "{}" is already present on a different VLAN; removing it...'.format(mac))
             cur.execute(('DELETE FROM radreply WHERE username = %s AND attribute = %s'),
                 (mac_format, 'Tunnel-Private-Group-ID'))
@@ -239,15 +239,16 @@ class Vlan:
                 'VALUES (%s, %s, %s, %s)'),
                 (mac_format, 'Tunnel-Private-Group-ID', ':=', self.vlan_id))
 
-            if cur.rowcount >= 0:
+            if cur.rowcount >= 1:
                 print_function('Adding host {} to VLAN {}...'.format(mac, self.vlan_id))
 
         # Now remove all old MAC addresses
         for mac in current_mac_addresses:
             mac_format = mac.format(dialect=netaddr.mac_bare).lower()
             cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
+            if cur.rowcount >= 1:
+                print_function('Removing host {} from VLAN {}...'.format(mac, self.vlan_id))
             cur.execute(('DELETE FROM radreply WHERE username = %s'), (mac_format,))
-            print_function('Removing host {} from VLAN {}...'.format(mac, self.vlan_id))
     
         # Commit all changes
         cnx.commit()

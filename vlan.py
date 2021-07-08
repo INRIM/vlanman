@@ -231,7 +231,7 @@ class Vlan:
             cur.execute(('INSERT INTO radcheck '
                 '(username, attribute, op, value) '
                 'VALUES (%s, %s, %s, %s)'),
-                (mac_format, 'Cleartext-Password', ':=', mac_format))
+                (mac_format, 'Auth-Type', ':=', 'Accept'))
 
             # Remove any previous VLAN, and add the VLAN to the authorization database
             cur.execute(('INSERT INTO radreply '

@@ -267,8 +267,7 @@ class Vlan:
                 cur.execute(('INSERT INTO radreply '
                     '(username, attribute, op, value) '
                     'VALUES (%s, %s, %s, %s)'),
-                    (mac_format, 'Framed-IP-Address', ':=', ipv4))
-
+                    (mac_format, 'Framed-IP-Address', ':=', format(ipv4)))
 
             if cur.rowcount >= 1:
                 print_function('Adding host {} to VLAN {}...'.format(mac, self.vlan_id))

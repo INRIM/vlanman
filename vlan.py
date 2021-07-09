@@ -53,9 +53,10 @@ class Vlan:
          if comment:
              self.comment = comment
          
-         # Initialize the DHCP config and the sheet records to empty list    
+         # Initialize the DHCP and RADIUS config and the sheet records to empty list    
          self.sheet_records = list()
          self.dhcp_config = list()
+         self.radius_config = list()
          
          # Set other parameters
          self.sheet_name = sheet_name
@@ -114,22 +115,22 @@ class Vlan:
             if mac not in mac_set:
                 mac_set.add(mac)
             else:
-                raise Exception('Duplicated MAC addess')
+                raise Exception('DHCP config: Duplicated MAC addess')
             
             # Validate hostname
             if not re.search(_HOSTNAME_REGEX, hostname):
-                raise Exception('{} is not a well-formed hostname.'.format(hostname))
+                raise Exception('DHCP config: {} is not a well-formed hostname.'.format(hostname))
                 
             # Validate IPv4 address
             ipv4 = ipaddress.ip_address(ipv4)    
             
             # Verify if IP address is within the LAN and/or is duplicate    
             if ipv4 not in self.vlan_cidr_network:
-                raise Exception('IPv4 outside of CIDR range.')
+                raise Exception('DHCP config: IPv4 outside of CIDR range.')
             if ipv4 not in ip_set:
                 ip_set.add(ipv4)
             else:
-                raise Exception('Duplicated IPv4 addess:"{}".'.format(ipv4))
+                raise Exception('DHCP config: duplicated IPv4 addess:"{}".'.format(ipv4))
             
             # Save result to a dictionary
             self.dhcp_config.append({'hostname': hostname,
@@ -172,23 +173,44 @@ class Vlan:
         if not self.sheet_records:
             raise Exception('No data from Google Sheets. Please retrieve it before with retrieve_data().')
         
-        # Create set of MAC addresses to avoid duplicates
-        self.radius_config = set()
+        # Create set of IP and MAC addresses to avoid duplicates
+        ip_set = set()
+        mac_set = set()
+        
+        # Re-initialize the RADIUS config
+        self.radius_config = list()
 
         for host in self.sheet_records:
             # Extract info from dictionary
             mac = host['Mac Address'].strip()
+            ipv4 = host['IPv4 address'].strip()
 
-            # If empty, continue
+            # If there's no MAC address, just continue
             if not mac:
                 continue
             
             # Validate and store MAC address
             mac = netaddr.EUI(mac)
-            if mac not in self.radius_config:
-                self.radius_config.add(mac)
+            if mac not in mac_set:
+                mac_set.add(mac)
             else:
-                raise Exception('Duplicated MAC addess')
+                raise Exception('RADIUS config: duplicated MAC addess')
+            
+            # Validate IPv4 address, if present
+            if ipv4:
+                ipv4 = ipaddress.ip_address(ipv4)    
+            
+                # Verify if IP address is within the LAN and/or is duplicate    
+                if ipv4 not in self.vlan_cidr_network:
+                    raise Exception('RADIUS config: IPv4 outside of CIDR range.')
+                if ipv4 not in ip_set:
+                    ip_set.add(ipv4)
+                else:
+                    raise Exception('RADIUS config: duplicated IPv4 addess:"{}".'.format(ipv4))
+
+            # Save result to a dictionary
+            self.radius_config.append({'mac': mac,
+                               'ipv4': ipv4})   
     
     def dump_to_radius_mysql(self, user, password, host, database, print_function=print):
         """ Dump the valudated set of MAC addresses to the MySQL FreeRADIUS database. """                           
@@ -211,7 +233,10 @@ class Vlan:
             current_mac_addresses.add(netaddr.EUI(mac))
 
         # Now process every content in Google Sheets, adding/removing it from the database
-        for mac in self.radius_config:
+        for host in self.radius_config:
+            # Extract info from dictionary
+            mac, ipv4 = host['mac'], host['ipv4']
+
             # Check if existing, then continue
             if mac in current_mac_addresses:
                 current_mac_addresses.remove(mac)
@@ -224,8 +249,8 @@ class Vlan:
             cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
             if cur.rowcount >= 1:
                 print_function('Host "{}" is already present on a different VLAN; removing it...'.format(mac))
-            cur.execute(('DELETE FROM radreply WHERE username = %s AND attribute = %s'),
-                (mac_format, 'Tunnel-Private-Group-ID'))
+            cur.execute(('DELETE FROM radreply WHERE username = %s AND (attribute = %s OR attribute = %s)'),
+                (mac_format, 'Tunnel-Private-Group-ID', 'Framed-IP-Address'))
 
             # If it does not exist, then add it to the authentication database
             cur.execute(('INSERT INTO radcheck '
@@ -233,11 +258,17 @@ class Vlan:
                 'VALUES (%s, %s, %s, %s)'),
                 (mac_format, 'Auth-Type', ':=', 'Accept'))
 
-            # Remove any previous VLAN, and add the VLAN to the authorization database
+            # Add to the VLAN to the authorization database
             cur.execute(('INSERT INTO radreply '
                 '(username, attribute, op, value) '
                 'VALUES (%s, %s, %s, %s)'),
                 (mac_format, 'Tunnel-Private-Group-ID', ':=', self.vlan_id))
+            if ipv4:
+                cur.execute(('INSERT INTO radreply '
+                    '(username, attribute, op, value) '
+                    'VALUES (%s, %s, %s, %s)'),
+                    (mac_format, 'Framed-IP-Address', ':=', ipv4))
+
 
             if cur.rowcount >= 1:
                 print_function('Adding host {} to VLAN {}...'.format(mac, self.vlan_id))

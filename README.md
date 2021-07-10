@@ -4,7 +4,7 @@ This scripts can:
 1. Retrieve a list of hostnames/MAC addresses/IP addresses from different Google Sheets files (one per VLAN).
 2. Validate that list.
 3. Generate automatically a leases configuration for an [ISC DHCPd](https://www.isc.org/dhcp/) server.
-4. Synchronize a MySQL database of authorized Mac Addresses, to be read by [FreeRADIUS](https://freeradius.org/).
+4. Synchronize a MySQL database of authorized Mac Addresses, to be read by [FreeRADIUS](https://freeradius.org/), suitable for Mac authentication.
 
 ## Usage
 
@@ -46,7 +46,7 @@ skips **the entire VLAN**. This is meant to always have a consistent and fully-v
 even if the configuration is slightly outdated.
 
 ## Installation with Docker
-This software has been designed to be run periodically (e.g. with cron) using a [Docker](https://www.docker.com/) container.
+This software has been designed to be run periodically (e.g. with systemd timers) using a [Docker](https://www.docker.com/) container.
 
 1. Create a Google Service account with read access to the wanted Google Sheets file, and download the credentials into a JSON
    file called `service_account.json`. You can follow the steps from the Gspread documentation: https://gspread.readthedocs.io/en/latest/oauth2.html.
@@ -58,7 +58,7 @@ This software has been designed to be run periodically (e.g. with cron) using a 
 ```bash
 docker volume create gsheets-vlan-gen   
 ```
-4. Create a configuration JSON file, containing the list of the VLANs and their associated informations. This file will be called `list_vlans.json`. For example:
+4. Create JSON file with the list of the VLANs and their associated informations. This file will be called `list_vlans.json`. For example, you can edit the [example_list_vlans.json](example_list_vlans.json) file:
 ```json
 [
     {
@@ -71,21 +71,30 @@ docker volume create gsheets-vlan-gen
     [...]
 ]
 ```
-5. Copy the JSON files containing the list of VLANs and the MySQL connection settings to the Docker volume created before. E.g.:
+5. Create a JSON file with the MySQL server settings. This file will be called `mysql_settings.json`. For example, you can edit the [example_mysql_settings.json](example_mysql_settings.json) file:
+```json
+{
+    "database": "radius",
+    "host": "radius.example.com",
+    "password": "password",
+    "user": "radius"
+}
+```
+6. Copy the JSON files containing the list of VLANs and the MySQL connection settings to the Docker volume created before. E.g.:
 ```bash
 cp list_vlans.json /var/lib/docker/volumes/gsheets-vlan-gen/_data
 cp mysql_settings.json /var/lib/docker/volumes/gsheets-vlan-gen/_data
 ```
-6. Clone this repository and build a Docker image
+7. Clone this repository and build a Docker image
 ```bash
 docker build -t gsheets-vlan-gen .
 ```
-7. Once created the image, you can *manually* build the new configurations with the following command:
+8. Once created the image, you can *manually* build the new configurations with the following command:
 ```bash
 docker run --rm -v gsheets-vlan-gen:/var/lib/vlan-config-gen gsheets-vlan-gen
 ```
   The files and the logfile will be created inside the Docker volume, i.e. in `/var/lib/docker/volumes/gsheets-vlan-gen`.
-8. The command written previously can be scripted, e.g. using crontab, to periodically generate new configuration.
+9. The command written previously can be scripted, e.g. using crontab, to periodically generate new configuration.
 
 ### Periodic update with systemd timer
 A good solution is the use of [systemd timers](https://wiki.archlinux.org/index.php/Systemd/Timers) to periodically
@@ -100,3 +109,11 @@ systemctl daemon-reload
 ```bash
 systemctl --now enable gsheets-vlan-gen.timer
 ```
+
+## FreeRADIUS configuration
+An example of [FreeRADIUS](https://freeradius.org/) configuration for this project is available on [radius.md](docs/radius.md).
+
+## License and copyright
+Copyright &copy; 2021 Istituto Nazionale di Ricerca Metrologica (INRiM) <d.pilori@inrim.it>.
+
+This software (and the associated documentation) is released under a [MIT License](https://opensource.org/licenses/MIT).

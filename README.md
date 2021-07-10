@@ -110,8 +110,10 @@ systemctl daemon-reload
 systemctl --now enable gsheets-vlan-gen.timer
 ```
 
-## FreeRADIUS configuration
-An example of [FreeRADIUS](https://freeradius.org/) configuration for this project is available on [radius.md](docs/radius.md).
+## Other documentation
+- An example of [FreeRADIUS](https://freeradius.org/) configuration for this project is available on [radius.md](docs/radius.md).
+- An example of configuration for [ArubaOS-CX](https://www.arubanetworks.com/products/switches/) switches and
+  [MikroTik](https://mikrotik.com/) devices is available on [network-devices.md](docs/network-devices.md).
 
 ## License and copyright
 Copyright &copy; 2021 Istituto Nazionale di Ricerca Metrologica (INRiM) <d.pilori@inrim.it>.

@@ -45,6 +45,8 @@ If any hostname, MAC Address or IPv4 address is not valid, the software triggers
 skips **the entire VLAN**. This is meant to always have a consistent and fully-valid DHCPd configuration for every VLAN,
 even if the configuration is slightly outdated.
 
+![Example VLAN](./img/gsheet-vlan.png)
+
 ## Installation with Docker
 This software has been designed to be run periodically (e.g. with systemd timers) using a [Docker](https://www.docker.com/) container.
 

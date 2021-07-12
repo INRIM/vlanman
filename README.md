@@ -118,6 +118,9 @@ systemctl --now enable gsheets-vlan-gen.timer
   [MikroTik](https://mikrotik.com/) devices is available on [network-devices.md](docs/network-devices.md).
 
 ## License and copyright
-Copyright &copy; 2021 Istituto Nazionale di Ricerca Metrologica (INRiM) <d.pilori@inrim.it>.
+Copyright &copy; 2021 Istituto Nazionale di Ricerca Metrologica (INRiM).
 
 This software (and the associated documentation) is released under a [MIT License](https://opensource.org/licenses/MIT).
+
+## Contacts
+- Dario Pilori (d.pilori@inrim.it)

@@ -22,7 +22,7 @@ Install MySQL server
 sudo apt install mysql-server
 ```
 
-Then add a database and a user for FreeRADIUS, by typing the following commands in the `mysql` shell as `root` user:
+Then add a database and a user for FreeRADIUS and a full-privilege user, by typing the following commands in the `mysql` shell as `root` user:
 
 ```sql
 CREATE DATABASE radius;
@@ -33,10 +33,103 @@ GRANT ALL on radius.radpostauth TO 'radius'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
+This user will have very limited privileges. Add then a fully-privileged user for administration and for the script
+that updates the database:
+
+```sql
+CREATE USER 'gsheets-gen'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON radius.* TO 'gsheets-gen'@'localhost';
+```
+
 ### MySQL replica
 
-Add tutorial to enable native MySQL replica...
+It is always useful to have a secondary RADIUS server, with a full replica of the MySQL server.
+For this, we can leverage MySQL integrated replica. Remember that, for the replica configurations,
+the two servers must be *100% clean*, i.e. no data is present. If not so, please check MySQL
+documentation for guidance.
 
+### Main server
+
+Start by editing the server configuration file `/etc/mysql/mysql.conf.d/mysqld.cnf`:
+
+```
+# Comment out this line
+# bind-address = 127.0.0.1
+
+# Set a different server-id on each server
+server-id               = 1
+# Binary logs expire after 30 days
+binlog_expire_logs_seconds      = 2592000
+max_binlog_size   = 100M
+# Create binary log for radius DB
+binlog_do_db            = radius
+# Enable GTID-based replica
+gtid_mode = ON
+enforce-gtid-consistency = ON
+```
+
+Restart the server:
+
+```bash
+systemctl restart mysql
+```
+
+Then, create a replication user, that can connect only from the replica (`radius2.example.com`) and has minimal privileges.
+We use SSL to secure the connection, even though we don't check for the certificates.
+
+```sql
+CREATE USER 'replica'@'radius2.example.com' IDENTIFIED BY 'password' REQUIRE SSL;
+GRANT REPLICATION SLAVE ON *.* TO 'replica'@'radius2.example.com';
+```
+
+### Replica
+
+Then create the same radius database and add the radius user (read-only!).
+
+```sql
+CREATE DATABASE radius;
+CREATE USER 'radius'@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT ON radius.* TO 'radius'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Also in this case, edit the server configuration file `/etc/mysql/mysql.conf.d/mysqld.cnf`:
+
+```
+server-id               = 2
+binlog_expire_logs_seconds      = 2592000
+max_binlog_size   = 100M
+binlog_do_db            = radius
+gtid_mode = ON
+enforce-gtid-consistency = ON
+
+# Relay log is important in the case of issues with the replica server
+relay-log = /var/log/mysql/mysql-relay-bin.log
+
+# Keep this only on first configuration, then, if it works, remove this line!
+skip_slave_start = ON
+```
+
+Restart the server:
+
+```bash
+systemctl restart mysql
+```
+
+Then enable replica:
+
+```sql
+CHANGE REPLICATION SOURCE TO
+     >     SOURCE_HOST = host,
+     >     SOURCE_PORT = port,
+     >     SOURCE_USER = user,
+     >     SOURCE_PASSWORD = password,
+     >     SOURCE_AUTO_POSITION = 1;
+START REPLICA;
+```
+
+If everything works, then remove the `skip_slave_start` line on the configuration file. The FreeRADIUS configuration is identical, with 
+the exception that the accounting lines are missing (the database on the replica is read-only).
 
 ## FreeRADIUS configuration
 
@@ -95,6 +188,28 @@ client test_switch {
 	secret = mysecret
 	nas_type = other
 	virtual_server = example 
+}
+```
+
+### Mac canonicalization
+
+This guide assumes that the Mac address is given by network equiment as a simple hex string, without any separator
+(e.g. `0123456789ab`). Some equipment may use different standards, which cannot be configured. In this case,
+a simple policy will rewrite any Mac address to this standard. Create the file `policy.d/mac-canonicalization`:
+
+```
+mac-addr-regexp = '([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})[^0-9a-f]?([0-9a-f]{2})'
+
+rewrite_mac_username {
+	if (&User-Name && (&User-Name =~ /^${policy.mac-addr-regexp}([^0-9a-f](.+))?$/i)) {
+		update request {
+			&User-Name := "%{tolower:%{1}%{2}%{3}%{4}%{5}%{6}}"
+		}
+		updated
+	}
+	else {
+		noop
+	}
 }
 ```
 
@@ -186,6 +301,7 @@ authorize {
     # If no EAP, assume Mac authentication
     # Then: PAP or CHAP authentication, SQL database
 	if (!EAP-Message) {
+		rewrite_mac_username
 		-sql
 		pap
 		chap 
@@ -351,3 +467,12 @@ ln -s ../sites-available/example .
 ln -s ../sites-available/example-inner-tunnel .
 systemctl restart freeradius
 ```
+
+## References
+
+- https://www.digitalocean.com/community/tutorials/how-to-set-up-replication-in-mysql
+- https://dev.mysql.com/doc/refman/8.0/en/replication-gtids-howto.html
+- https://wiki.freeradius.org/guide/SQL-HOWTO-for-freeradius-3.x-on-Debian-Ubuntu
+- https://wiki.freeradius.org/guide/mac-auth
+- https://docs.eduroam.it/configurazione/freeradius.html
+- https://help.mikrotik.com/docs/display/ROS/DHCP#DHCP-DHCPServer

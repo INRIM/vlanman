@@ -84,7 +84,7 @@ docker volume create gsheets-vlan-gen
 ```
 This user requires `SELECT`, `INSERT` and `DELETE` permissions over the `radreply` and `radcheck` tables. If you trust this
 scripts, you can simply grant all privileges to the user. Assuming that this script is run on the `myserver.example.com` server:
-```mysql
+```sql
 CREATE USER 'radius'@'myserver.example.com' IDENTIFIED BY 'password';
 GRANT SELECT, INSERT, DELETE ON radius.radreply TO 'radius'@'myserver.example.com';
 GRANT SELECT, INSERT, DELETE ON radius.radcheck TO 'radius'@'myserver.example.com';
@@ -119,13 +119,45 @@ systemctl daemon-reload
 systemctl --now enable gsheets-vlan-gen.timer
 ```
 
+## Clean up of RADIUS accounting table
+The `radacct` table contains all RADIUS's accounting information. This table can become very large. Therefore,
+it is useful to remove all connections older than a certain date, and also stale connections.
+
+The script `clean_radacct.py` can help. It can be used with the following options:
+```bash
+$ ./clean_radacct.py -h
+usage: clean_radacct.py [-h] [-d JSON_MYSQL_SETTINGS] [-s DAYS_STALE] [-m MAXIMUM_DAYS] [-l LOG_FILE] [-v]
+
+Clean the RADIUS accounting table.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d JSON_MYSQL_SETTINGS, --mysql-settings JSON_MYSQL_SETTINGS
+                        JSON-formatted MySQL settings.
+  -s DAYS_STALE, --days-stale DAYS_STALE
+                        Number of days to keep stale connections.
+  -m MAXIMUM_DAYS, --maximum-days MAXIMUM_DAYS
+                        Maximum number of days to keep connections.
+  -l LOG_FILE, --log-file LOG_FILE
+                        Log file.
+  -v, --verbose         Be verbose.
+```
+
+By default, it removes all connections older than 180 days (6 months), and stale connections older than 35 days. 
+The syntax of the MySQL settings JSON file is identical to the `mysql_settings.json` file. 
+This script requires a user with `DELETE` privileges on the `radacct` table. For instance:
+```sql
+CREATE USER 'cleanradacct'@'myserver.example.com' IDENTIFIED BY 'password';
+GRANT DELETE ON radius.radacct TO 'cleanradacct'@'myserver.example.com';
+```
+
 ## Other documentation
 - An example of [FreeRADIUS](https://freeradius.org/) configuration for this project is available on [radius.md](docs/radius.md).
 - An example of configuration for [ArubaOS-CX](https://www.arubanetworks.com/products/switches/) switches and
   [MikroTik](https://mikrotik.com/) devices is available on [network-devices.md](docs/network-devices.md).
 
 ## License and copyright
-Copyright &copy; 2021 Istituto Nazionale di Ricerca Metrologica (INRiM).
+Copyright &copy; 2021 Istituto Nazionale di Ricerca Metrologica (INRiM). For information contact Dario Pilori <d.pilori@inrim.it>.
 
 This software (and the associated documentation) is released under a [MIT License](https://opensource.org/licenses/MIT).
 

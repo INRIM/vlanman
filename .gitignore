@@ -3,10 +3,10 @@
 experiments/
 
 # MySQL settings
-mysql_settings.json
+mysql_settings*.json
 
 # This is a mere configuration file
-list_vlans.json
+list_vlans*.json
 
 # Temporary JSON files
 vlan*.json

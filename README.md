@@ -82,6 +82,13 @@ docker volume create gsheets-vlan-gen
     "user": "radius"
 }
 ```
+This user requires `SELECT`, `INSERT` and `DELETE` permissions over the `radreply` and `radcheck` tables. If you trust this
+scripts, you can simply grant all privileges to the user. Assuming that this script is run on the `myserver.example.com` server:
+```mysql
+CREATE USER 'radius'@'myserver.example.com' IDENTIFIED BY 'password';
+GRANT SELECT, INSERT, DELETE ON radius.radreply TO 'radius'@'myserver.example.com';
+GRANT SELECT, INSERT, DELETE ON radius.radcheck TO 'radius'@'myserver.example.com';
+```
 6. Copy the JSON files containing the list of VLANs and the MySQL connection settings to the Docker volume created before. E.g.:
 ```bash
 cp list_vlans.json /var/lib/docker/volumes/gsheets-vlan-gen/_data

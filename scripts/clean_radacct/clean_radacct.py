@@ -41,9 +41,9 @@ cli_parser = argparse.ArgumentParser(description="Clean the RADIUS accounting ta
 cli_parser.add_argument("-d", "--mysql-settings",
                        help="JSON-formatted MySQL settings.", metavar="JSON_MYSQL_SETTINGS", default="mysql_settings.json")
 cli_parser.add_argument("-s", "--days-stale",
-                       help="Number of days to keep stale connections.", default=35, type=int)
+                       help="Number of days to keep stale connections.", default=30, type=int)
 cli_parser.add_argument("-m", "--maximum-days",
-                       help="Maximum number of days to keep connections.", default=180, type=int)
+                       help="Maximum number of days to keep connections.", default=90, type=int)
 cli_parser.add_argument("-l", "--log-file",
                        help="Log file.", default="output.log")     
 cli_parser.add_argument("-v", "--verbose",

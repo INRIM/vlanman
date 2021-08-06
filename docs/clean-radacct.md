@@ -63,4 +63,4 @@ an example [Dockerfile](../scripts/clean_radacct/Dockerfile) is provided.
    docker run --rm -v clean-radacct:/var/lib/clean-radacct clean-radacct
    ```
   The files and the logfile will be created inside the Docker volume, i.e. in `/var/lib/docker/volumes/clean-radacct`.
-6. The command written previously can be scripted, e.g. using crontab, to periodically generate new configuration.
+6. The command written previously can be scripted, e.g. using crontab or a systemd timer.

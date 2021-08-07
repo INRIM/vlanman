@@ -137,8 +137,10 @@ $AllowedSender UDP, 10.0.0.2/32
 }
 ```
 
-And restart `rsyslogd`:
+Create the directory `/var/log/mikrotik`, set the permissions, and restart `rsyslogd`:
 ```bash
+mkdir /var/log/mikrotik
+chown -R syslog.adm /var/log/mikrotik
 systemctl restart rsyslog
 ```
 
@@ -152,11 +154,12 @@ ufw allow proto udp from 10.0.0.2 to any port 514
 /radius
 add address=10.0.0.1 secret="secret" service=dhcp
 ```
+Remember to also add this device, along with the shared secret, to the `clients.conf` in the FreeRADIUS configuration.
 
 ### For each VLAN
 
-For each VLAN, the MikroTik device acts as a remote DHCP server. An ArubaOS-CX switch instead acts as a DHCP relay, that relays
-the information to the server. With this settings, the MikroTik device can be regularly connected to a single VLAN.
+For each VLAN, the MikroTik device acts as a remote DHCP server. The ArubaOS-CX switch, which is the gateway of the network,
+acts as a DHCP relay, that relays the information to the server. With this settings, the MikroTik device can be regularly connected to a single VLAN.
 
 Assuming VLAN `100`, with subnet `10.1.0.0/24`, a possible configuration can be:
 
@@ -184,6 +187,10 @@ interface vlan 100
     ip address 10.1.0.1/24
     ip helper-address 10.0.0.2
 ```
+
+### DHCP failover
+Add instructions to add a secondary DHCP server for failover...
+
 
 ## References
 - https://help.mikrotik.com/docs/display/ROS/DHCP#DHCP-DHCPServer

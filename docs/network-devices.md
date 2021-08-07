@@ -1,6 +1,6 @@
 # Configuration of network devices
 
-## ArubaOS-CX switches
+## ArubaOS-CX switches authentication
 This guide will give a "recipe" to configure AAA (authentication, authorization and accounting)
 using the RADIUS server configured in [radius.md](radius.md). The user/device is authenticated with:
 
@@ -88,6 +88,104 @@ interface 1/1/1
     aaa authentication port-access client-limit 10
 ```
 
+## MikroTik DHCP server
+It is useful to have a DHCP server that supports contacting a RADIUS server to get the lease information.
+Unfortunately, on Linux, the only viable solution is [ISC Kea](https://www.isc.org/kea/) with the premium plugins, which cost
+an insane amount of money.
+
+Therefore, a good choice of a DHCP server is a [MikroTik](https://mikrotik.com/) device, since MikroTik's RouterOS DHCP server
+fully supports a RADIUS server. For this guide, I assume a [RB1100AHx4](https://mikrotik.com/product/rb1100ahx4) router, even though
+the guide can be applied to potentially any RouterOS device, including CHR virtual machines.
+
+For this guide we'll assume that the MikroTik device has IP `10.0.0.2` and the RADIUS server, also used for logging, `10.0.0.1`.
+
+### Mikrotik initial setup
+1. Start by configuring *Rsyslog* remote logging for audit purposes. On the MikroTik device set:
+
+```bash
+/system logging action
+set [find name=remote] remote=10.0.0.1
+/system logging
+add action=remote topics=dhcp
+```
+
+Then, on the *Rsyslog* server (it can be the RADIUS server, or another):
+
+`/etc/rsyslog.d/60-mikrotik-dhcp-server.conf`:
+```
+$template Dhcp1Log, "/var/log/mikrotik/dhcp1.log"
+:fromhost-ip, isequal, "10.0.0.2" -?Dhcp1Log
+& stop
+```
+
+`/etc/rsyslog.conf`:
+```
+module(load="imudp")
+input(type="imudp" port="514")
+$AllowedSender UDP, 10.0.0.2/32
+```
+
+`/etc/logrotate.d/mikrotik-dhcp`:
+```
+/var/log/mikrotik/*.log {
+        rotate 30
+        daily
+        create
+        compress
+        missingok
+        notifempty
+}
+```
+
+And restart `rsyslogd`:
+```bash
+systemctl restart rsyslog
+```
+
+Make sure that the firewall doesn't block *rsyslog* (UDP port 514). For instance with `ufw`:
+```bash
+ufw allow proto udp from 10.0.0.2 to any port 514
+```
+
+2. Configure the RADIUS server on the MikroTik device:
+```bash
+/radius
+add address=10.0.0.1 secret="secret" service=dhcp
+```
+
+### For each VLAN
+
+For each VLAN, the MikroTik device acts as a remote DHCP server. An ArubaOS-CX switch instead acts as a DHCP relay, that relays
+the information to the server. With this settings, the MikroTik device can be regularly connected to a single VLAN.
+
+Assuming VLAN `100`, with subnet `10.1.0.0/24`, a possible configuration can be:
+
+1. Add a DHCP pool, if needed, for dynamic clients.
+```bash
+/ip pool
+add name=vlan100_pool ranges=10.1.0.10-10.1.0.20
+```
+
+2. Set the DHCP network information
+```
+/ip dhcp-server network
+add address=10.1.0.0/24 comment="VLAN100" dns-server=8.8.8.8,8.8.4.4 domain=example.com gateway=10.1.0.1 ntp-server=193.204.114.232,193.204.114.233
+```
+
+3. Create and enable the DHCP server
+```
+/ip dhcp-server
+add address-pool=vlan100_pool interface=ether1 name=vlan100-server relay=10.1.0.1 use-radius=yes disabled=no
+```
+
+4. Set the DHCP relay on the ArubaOS-CX switch, which acts as gateway.
+```
+interface vlan 100
+    ip address 10.1.0.1/24
+    ip helper-address 10.0.0.2
+```
+
 ## References
 - https://help.mikrotik.com/docs/display/ROS/DHCP#DHCP-DHCPServer
+- https://wiki.mikrotik.com/wiki/Manual:System/Log
 - https://asp.arubanetworks.com/

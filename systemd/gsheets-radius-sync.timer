@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily synchronize FreeRADIUS database with Google Sheets
+
+[Timer]
+OnCalendar=daily
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,7 @@
+[Unit]
+Description=Synchronize FreeRADIUS database with Google Sheets
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker run --rm -v gsheets-vlan-gen:/var/lib/vlan-config-gen gsheets-vlan-gen -v
+

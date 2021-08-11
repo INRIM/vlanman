@@ -30,7 +30,7 @@ VOLNAME="gsheets-vlan-gen"
 DHCP_CONF_DIR="/etc/dhcp/reservations/"
 
 # Get a new config 
-/usr/bin/docker run --rm -v ${VOLNAME}:/var/lib/vlan-config-gen gsheets-vlan-gen -v
+/usr/bin/docker run --rm -v ${VOLNAME}:/var/lib/vlan-config-gen gsheets-vlan-gen -v --dhcp
 
 # Copy the config to the DHCPd configuration dir, making a backup of old files
 cp -b --suffix=".old" /var/lib/docker/volumes/${VOLNAME}/_data/*.conf ${DHCP_CONF_DIR}

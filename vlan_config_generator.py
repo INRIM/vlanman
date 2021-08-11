@@ -79,7 +79,7 @@ for v in list_vlan:
         try:
             v.generate_dhcp_config()
             v.dump_to_dhcpd(out_dir=args.output_dir)
-            vlan_logger.info('Successfully parsed VLAN {}'.format(v.vlan_id))
+            vlan_logger.info('Successfully generated DHCP config for VLAN {}'.format(v.vlan_id))
         except Exception as exc:
             vlan_logger.error('Skipping ISC DHCP config of VLAN {} due to {} error: "{}".'.format(v.vlan_id, type(exc).__name__, exc))
 
@@ -90,5 +90,6 @@ for v in list_vlan:
             with open(args.mysql_settings, 'r') as f:
                 mysql_settings = json.load(f)
             v.dump_to_radius_mysql(**mysql_settings, print_function=vlan_logger.info)
+            vlan_logger.info('Successfully synchronized RADIUS db for VLAN {}'.format(v.vlan_id))
         except Exception as exc:
             vlan_logger.error('Skipping RADIUS database sync of VLAN {} due to {} error: "{}".'.format(v.vlan_id, type(exc).__name__, exc))

@@ -106,7 +106,7 @@ For this guide we'll assume that the MikroTik device has IP `10.0.0.2` and the R
 /system logging action
 set [find name=remote] remote=10.0.0.1
 /system logging
-add action=remote topics=dhcp
+add action=remote topics=dhcp,!debug
 ```
 
 Then, on the *Rsyslog* server (it can be the RADIUS server, or another):

@@ -283,7 +283,7 @@ class Vlan:
                 if cur.rowcount >= 1:
                     print_function('Host "{}" is already present on a different VLAN; removing it...'.format(mac))
                 cur.execute(('DELETE FROM radreply WHERE username = %s'),
-                    (mac_format, 'Tunnel-Private-Group-ID', 'Framed-IP-Address'))
+                    (mac_format, ))
 
                 # Add host to the authentication database
                 cur.execute(('INSERT INTO radcheck '

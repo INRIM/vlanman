@@ -226,17 +226,22 @@ class Vlan:
         # Get list of Mac-IP for the current VLAN
         cur.execute(('SELECT radcheck.username, radreply.value '
 	                 ' FROM radcheck '
-                     ' INNER JOIN radreply ON radcheck.username = radreply.username '
+                     ' LEFT JOIN radreply ON ( '
+                     '    radcheck.username = radreply.username '
+                     '    AND radreply.attribute = "Framed-IP-Address"'
+                     ' ) '
                      ' WHERE radcheck.username IN( '
     	             '    SELECT radcheck.username '
 		             '    FROM radcheck '
     	             '    INNER JOIN radreply ON radcheck.username = radreply.username '
     	             '    WHERE radreply.value = %s AND radreply.attribute = "Tunnel-Private-Group-ID" '
-                     ') AND radreply.attribute = "Framed-IP-Address" '), (self.vlan_id, ))
+                     ')'), (self.vlan_id, ))
         
-        current_mac_addresses = set()
-        for (mac, ipv4 ) in cur:
-            current_mac_addresses.add(netaddr.EUI(mac))
+        # Generate set of current MAC addresses and dictionary with MAC -> IPv4 bindings (if any)
+        current_macs = set()
+
+        for (mac, ipv4) in cur:
+            current_macs.add(netaddr.EUI(mac))
 
         # Now process every content in Google Sheets, adding/removing it from the database
         for host in self.radius_config:
@@ -244,8 +249,8 @@ class Vlan:
             mac, ipv4 = host['mac'], host['ipv4']
 
             # Check if existing, then continue
-            if mac in current_mac_addresses:
-                current_mac_addresses.remove(mac)
+            if (mac, ipv4) in current_macs:
+                current_macs.remove((mac, ipv4))
                 continue
 
             # Format MAC address as wanted by Aruba switches
@@ -279,7 +284,7 @@ class Vlan:
                 print_function('Adding host {} to VLAN {}...'.format(mac, self.vlan_id))
 
         # Now remove all old MAC addresses
-        for mac in current_mac_addresses:
+        for mac in current_macs:
             mac_format = mac.format(dialect=netaddr.mac_bare).lower()
             cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
             if cur.rowcount >= 1:

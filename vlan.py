@@ -223,13 +223,19 @@ class Vlan:
                                   database=database)
         cur = cnx.cursor()
 
-        # Get all current Mac Addresses from the database into a set
-        cur.execute(('SELECT radcheck.username FROM radcheck '
-            'INNER JOIN radreply ON radcheck.username=radreply.username '
-            'WHERE radreply.value= %s '
-            'AND radreply.attribute="Tunnel-Private-Group-ID"'), (self.vlan_id, ))
+        # Get list of Mac-IP for the current VLAN
+        cur.execute(('SELECT radcheck.username, radreply.value '
+	                 ' FROM radcheck '
+                     ' INNER JOIN radreply ON radcheck.username = radreply.username '
+                     ' WHERE radcheck.username IN( '
+    	             '    SELECT radcheck.username '
+		             '    FROM radcheck '
+    	             '    INNER JOIN radreply ON radcheck.username = radreply.username '
+    	             '    WHERE radreply.value = %s AND radreply.attribute = "Tunnel-Private-Group-ID" '
+                     ') AND radreply.attribute = "Framed-IP-Address" '), (self.vlan_id, ))
+        
         current_mac_addresses = set()
-        for (mac, ) in cur:
+        for (mac, ipv4 ) in cur:
             current_mac_addresses.add(netaddr.EUI(mac))
 
         # Now process every content in Google Sheets, adding/removing it from the database

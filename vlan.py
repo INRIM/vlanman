@@ -237,51 +237,75 @@ class Vlan:
     	             '    WHERE radreply.value = %s AND radreply.attribute = "Tunnel-Private-Group-ID" '
                      ')'), (self.vlan_id, ))
         
-        # Generate set of current MAC addresses and dictionary with MAC -> IPv4 bindings (if any)
+        # Generate a set of current MAC addresses and a dictionary with MAC -> IPv4 bindings (if any)
         current_macs = set()
-
+        ip_bindings = dict()
         for (mac, ipv4) in cur:
             current_macs.add(netaddr.EUI(mac))
+            # Verify if an IPv4 is given or not
+            if ipv4:
+                ip_bindings[netaddr.EUI(mac)] = ipaddress.ip_address(ipv4)
+            else:
+                ip_bindings[netaddr.EUI(mac)] = None
 
         # Now process every content in Google Sheets, adding/removing it from the database
         for host in self.radius_config:
-            # Extract info from dictionary
+            # Extract info
             mac, ipv4 = host['mac'], host['ipv4']
-
-            # Check if existing, then continue
-            if (mac, ipv4) in current_macs:
-                current_macs.remove((mac, ipv4))
-                continue
 
             # Format MAC address as wanted by Aruba switches
             mac_format = mac.format(dialect=netaddr.mac_bare).lower()
-   
-            # Check if host is currently present on a different VLAN, and, if so, remove it
-            cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
-            if cur.rowcount >= 1:
-                print_function('Host "{}" is already present on a different VLAN; removing it...'.format(mac))
-            cur.execute(('DELETE FROM radreply WHERE username = %s AND (attribute = %s OR attribute = %s)'),
-                (mac_format, 'Tunnel-Private-Group-ID', 'Framed-IP-Address'))
 
-            # If it does not exist, then add it to the authentication database
-            cur.execute(('INSERT INTO radcheck '
-                '(username, attribute, op, value) '
-                'VALUES (%s, %s, %s, %s)'),
-                (mac_format, 'Auth-Type', ':=', 'Accept'))
+            # First of all, check if the Mac already exists
+            if mac in current_macs:
+                # Remove from the list
+                current_macs.remove(mac)
 
-            # Add to the VLAN to the authorization database
-            cur.execute(('INSERT INTO radreply '
-                '(username, attribute, op, value) '
-                'VALUES (%s, %s, %s, %s)'),
-                (mac_format, 'Tunnel-Private-Group-ID', ':=', self.vlan_id))
-            if ipv4:
+                # Check if IP binding is correct; if so, continue
+                if ip_bindings[mac] == ipv4:
+                    continue
+                else:
+                    # Otherwise, fix IP binding
+                    cur.execute(('DELETE FROM radreply WHERE username = %s AND attribute = "Framed-IP-Address"'),
+                               (mac_format,))
+
+                    if ipv4:
+                        cur.execute(('INSERT INTO radreply '
+                            '(username, attribute, op, value) '
+                            'VALUES (%s, %s, %s, %s)'),
+                            (mac_format, 'Framed-IP-Address', ':=', format(ipv4)))
+                        print_function('Setting new IPv4 address of host "{}": {}...'.format(mac, ipv4))
+            
+            # Mac is not present in this VLAN: add a new record
+            else:
+                # Check if host is currently present on a different VLAN, and, if so, remove it
+                cur.execute(('DELETE FROM radcheck WHERE username = %s'), (mac_format,))
+                if cur.rowcount >= 1:
+                    print_function('Host "{}" is already present on a different VLAN; removing it...'.format(mac))
+                cur.execute(('DELETE FROM radreply WHERE username = %s'),
+                    (mac_format, 'Tunnel-Private-Group-ID', 'Framed-IP-Address'))
+
+                # Add host to the authentication database
+                cur.execute(('INSERT INTO radcheck '
+                    '(username, attribute, op, value) '
+                    'VALUES (%s, %s, %s, %s)'),
+                    (mac_format, 'Auth-Type', ':=', 'Accept'))
+
+                # Set VLAN id
                 cur.execute(('INSERT INTO radreply '
                     '(username, attribute, op, value) '
                     'VALUES (%s, %s, %s, %s)'),
-                    (mac_format, 'Framed-IP-Address', ':=', format(ipv4)))
+                    (mac_format, 'Tunnel-Private-Group-ID', ':=', self.vlan_id))
+                # If set, set IPv4
+                if ipv4:
+                    cur.execute(('INSERT INTO radreply '
+                        '(username, attribute, op, value) '
+                        'VALUES (%s, %s, %s, %s)'),
+                        (mac_format, 'Framed-IP-Address', ':=', format(ipv4)))
 
-            if cur.rowcount >= 1:
-                print_function('Adding host {} to VLAN {}...'.format(mac, self.vlan_id))
+                # Print what is done
+                if cur.rowcount >= 1:
+                    print_function('Adding host {} to VLAN {}...'.format(mac, self.vlan_id))
 
         # Now remove all old MAC addresses
         for mac in current_macs:

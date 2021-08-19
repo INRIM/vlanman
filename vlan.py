@@ -224,10 +224,10 @@ class Vlan:
         cur = cnx.cursor()
 
         # Get all current Mac Addresses from the database into a set
-        cur.execute('SELECT radcheck.username FROM radcheck '
+        cur.execute(('SELECT radcheck.username FROM radcheck '
             'INNER JOIN radreply ON radcheck.username=radreply.username '
-            'WHERE radreply.value="{}" '
-            'AND radreply.attribute="Tunnel-Private-Group-ID"'.format(self.vlan_id))
+            'WHERE radreply.value= %s '
+            'AND radreply.attribute="Tunnel-Private-Group-ID"'), (self.vlan_id, ))
         current_mac_addresses = set()
         for (mac, ) in cur:
             current_mac_addresses.add(netaddr.EUI(mac))

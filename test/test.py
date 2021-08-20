@@ -89,7 +89,7 @@ class TestVlan(unittest.TestCase):
         vlan_test.dump_to_dhcpd()
         self.assertTrue(filecmp.cmp('test_vlan_unittest.conf', 'test_vlan.conf'))
     
-    def test_radius_sql(self):
+    def test_initial_radius_sql(self):
         """ Import a test vlan JSON and verify that the MAC addresses are successfully added to DHCP. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
         vlan_test.generate_radius_config(json_in='test_vlan.json')
@@ -97,6 +97,16 @@ class TestVlan(unittest.TestCase):
                 mysql_settings = json.load(f)
         vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan.json'))
+    
+    def test_radius_addhost(self):
+        """ Add a new host to RADIUS database. """
+        vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
+        vlan_test.generate_radius_config(json_in='test_vlan_addhost.json')
+        with open('test_mysql_settings.json', 'r') as f:
+                mysql_settings = json.load(f)
+        vlan_test.dump_to_radius_mysql(**mysql_settings)
+        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_addhost.json'))
+
     
 if __name__ == '__main__':
     unittest.main()

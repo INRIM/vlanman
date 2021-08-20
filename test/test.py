@@ -98,14 +98,23 @@ class TestVlan(unittest.TestCase):
         vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan.json'))
     
-    def test_radius_addhost(self):
-        """ Add a new host to RADIUS database. """
+    def test_sql_addhost(self):
+        """ Add a new host to RADIUS database and change the IP of another host. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
         vlan_test.generate_radius_config(json_in='test_vlan_addhost.json')
         with open('test_mysql_settings.json', 'r') as f:
                 mysql_settings = json.load(f)
         vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_addhost.json'))
+    
+    def test_sql_removehost(self):
+        """ Remove a host from RADIUS database and add an IP address to the third host. """
+        vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
+        vlan_test.generate_radius_config(json_in='test_vlan_removehost.json')
+        with open('test_mysql_settings.json', 'r') as f:
+                mysql_settings = json.load(f)
+        vlan_test.dump_to_radius_mysql(**mysql_settings)
+        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json'))
 
     
 if __name__ == '__main__':

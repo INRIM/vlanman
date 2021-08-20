@@ -73,15 +73,11 @@ class TestVlan(unittest.TestCase):
         for host in test_vlan_json:
             json_mac_addresses.add(netaddr.EUI(host['Mac Address']))
             if host['IPv4 address']:
-                json_ip_bindings[netaddr.EUI(mac)] = ipaddress.ip_address(host['IPv4 address'])
+                json_ip_bindings[netaddr.EUI(netaddr.EUI(host['Mac Address']))] = ipaddress.ip_address(host['IPv4 address'])
             else:
-                json_ip_bindings[netaddr.EUI(mac)] = None
+                json_ip_bindings[netaddr.EUI(netaddr.EUI(host['Mac Address']))] = None
 
-        # Compare
-        pprint.pprint(mysql_ip_bindings, stream=sys.stderr)
-        pprint.pprint(json_ip_bindings, stream=sys.stderr)
-
-        if (json_mac_addresses == mysql_mac_addresses):
+        if (json_mac_addresses == mysql_mac_addresses) and (json_ip_bindings == mysql_ip_bindings):
             return True
         else:
             return False

@@ -31,31 +31,56 @@ import filecmp
 import json
 import mysql.connector
 import netaddr
+import ipaddress
 
 class TestVlan(unittest.TestCase):
     def compare_databases(self, mysql_settings, json_in):
-        # Get all Mac Addresses of this VLAN from the database into a set
+        # Get table with MAC addresses and IPv4 for the test VLAN
         cnx = mysql.connector.connect(**mysql_settings)
         cur = cnx.cursor()
-        cur.execute('SELECT radcheck.username FROM radcheck '
-            'INNER JOIN radreply ON radcheck.username=radreply.username '
-            'WHERE radreply.value="{}" '
-            'AND radreply.attribute="Tunnel-Private-Group-ID"'.format(601))
+        cur.execute(('SELECT radcheck.username, radreply.value '
+	                 ' FROM radcheck '
+                     ' LEFT JOIN radreply ON ( '
+                     '    radcheck.username = radreply.username '
+                     '    AND radreply.attribute = "Framed-IP-Address"'
+                     ' ) '
+                     ' WHERE radcheck.username IN( '
+    	             '    SELECT radcheck.username '
+		             '    FROM radcheck '
+    	             '    INNER JOIN radreply ON radcheck.username = radreply.username '
+    	             '    WHERE radreply.value = %s AND radreply.attribute = "Tunnel-Private-Group-ID" '
+                     ')'), (601, ))
+        # Write set of known MACs and IP bindings
         mysql_mac_addresses = set()
-        for (mac, ) in cur:
+        mysql_ip_bindings = dict()
+        for (mac, ipv4) in cur:
             mysql_mac_addresses.add(netaddr.EUI(mac))
+            if ipv4:
+                mysql_ip_bindings[netaddr.EUI(mac)] = ipaddress.ip_address(ipv4)
+            else:
+                mysql_ip_bindings[netaddr.EUI(mac)] = None
+        
+        # Close MySQL connection
         cur.close()
         cnx.close()
 
-        # Load MAC addresses from JSON
+        # Load info from JSON
         with open(json_in, 'r') as f:
             test_vlan_json = json.load(f)
         json_mac_addresses = set()
+        json_ip_bindings = dict()
         for host in test_vlan_json:
             json_mac_addresses.add(netaddr.EUI(host['Mac Address']))
+            if host['IPv4 address']:
+                json_ip_bindings[netaddr.EUI(mac)] = ipaddress.ip_address(host['IPv4 address'])
+            else:
+                json_ip_bindings[netaddr.EUI(mac)] = None
 
-        return json_mac_addresses == mysql_mac_addresses
-
+        # Compare
+        if (json_mac_addresses == mysql_mac_addresses) and (json_ip_bindings == mysql_ip_bindings):
+            return True
+        else:
+            return False
 
     def test_dhcp_validation(self):
         """ Import a test vlan JSON and verify that the output DHCP config is correct. """

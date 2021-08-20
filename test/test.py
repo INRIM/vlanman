@@ -32,6 +32,7 @@ import json
 import mysql.connector
 import netaddr
 import ipaddress
+import pprint
 
 class TestVlan(unittest.TestCase):
     def compare_databases(self, mysql_settings, json_in):
@@ -77,7 +78,10 @@ class TestVlan(unittest.TestCase):
                 json_ip_bindings[netaddr.EUI(mac)] = None
 
         # Compare
-        if (json_mac_addresses == mysql_mac_addresses) and (json_ip_bindings == mysql_ip_bindings):
+        pprint.pprint(mysql_ip_bindings, file=sys.stderr)
+        pprint.pprint(json_ip_bindings, file=sys.stderr)
+
+        if (json_mac_addresses == mysql_mac_addresses):
             return True
         else:
             return False

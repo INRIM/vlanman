@@ -189,8 +189,23 @@ interface vlan 100
 ```
 
 ### DHCP failover
-Add instructions to add a secondary DHCP server for failover...
 
+To set a failover, you can configure another MikroTik device and set the ``delay-threshold``, so that the DHCP server answers only
+unanswered requests after this amount of time.
+
+1. Add the DHCP pool and network, exactly as the primary DHCP server:
+```bash
+/ip pool
+add name=vlan100_pool ranges=10.1.0.10-10.1.0.20
+/ip dhcp-server network
+add address=10.1.0.0/24 comment="VLAN100" dns-server=8.8.8.8,8.8.4.4 domain=example.com gateway=10.1.0.1 ntp-server=193.204.114.232,193.204.114.233
+```
+
+2. Add the DHCP server by setting the delay:
+```bash
+/ip dhcp-server
+add address-pool=vlan100_pool interface=ether1 name=vlan100-server relay=10.1.0.1 use-radius=yes disabled=no authoritative=after-10sec-delay delay-threshold=5s
+```
 
 ## References
 - https://help.mikrotik.com/docs/display/ROS/DHCP#DHCP-DHCPServer

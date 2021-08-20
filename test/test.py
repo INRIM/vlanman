@@ -35,7 +35,7 @@ import ipaddress
 import pprint
 
 class TestVlan(unittest.TestCase):
-    def compare_databases(self, mysql_settings, json_in):
+    def compare_databases(self, mysql_settings, json_in, vlan_id):
         # Get table with MAC addresses and IPv4 for the test VLAN
         cnx = mysql.connector.connect(**mysql_settings)
         cur = cnx.cursor()
@@ -50,7 +50,7 @@ class TestVlan(unittest.TestCase):
 		             '    FROM radcheck '
     	             '    INNER JOIN radreply ON radcheck.username = radreply.username '
     	             '    WHERE radreply.value = %s AND radreply.attribute = "Tunnel-Private-Group-ID" '
-                     ')'), (601, ))
+                     ')'), (vlan_id, ))
         # Write set of known MACs and IP bindings
         mysql_mac_addresses = set()
         mysql_ip_bindings = dict()
@@ -96,7 +96,7 @@ class TestVlan(unittest.TestCase):
         with open('test_mysql_settings.json', 'r') as f:
                 mysql_settings = json.load(f)
         vlan_test.dump_to_radius_mysql(**mysql_settings)
-        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan.json'))
+        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan.json', 601))
     
     def test_sql_addhost(self):
         """ Add a new host to RADIUS database and change the IP of another host. """
@@ -105,7 +105,7 @@ class TestVlan(unittest.TestCase):
         with open('test_mysql_settings.json', 'r') as f:
                 mysql_settings = json.load(f)
         vlan_test.dump_to_radius_mysql(**mysql_settings)
-        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_addhost.json'))
+        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_addhost.json', 601))
     
     def test_sql_removehost(self):
         """ Remove a host from RADIUS database and add an IP address to the third host. """
@@ -114,8 +114,16 @@ class TestVlan(unittest.TestCase):
         with open('test_mysql_settings.json', 'r') as f:
                 mysql_settings = json.load(f)
         vlan_test.dump_to_radius_mysql(**mysql_settings)
-        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json'))
+        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json', 601))
 
+    def test_sql_differentvlan(self):
+        """ Move a host to a different VLAN. """
+        vlan_test = Vlan(701, '10.71.0.0/24', 'VLAN_TEST_2', 'test_vlan_unittest.conf')
+        vlan_test.generate_radius_config(json_in='test_vlan_differentvlan.json')
+        with open('test_mysql_settings.json', 'r') as f:
+                mysql_settings = json.load(f)
+        vlan_test.dump_to_radius_mysql(**mysql_settings)
+        self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_differentvlan.json', 701))
     
 if __name__ == '__main__':
     unittest.main()

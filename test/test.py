@@ -78,8 +78,8 @@ class TestVlan(unittest.TestCase):
                 json_ip_bindings[netaddr.EUI(mac)] = None
 
         # Compare
-        pprint.pprint(mysql_ip_bindings, file=sys.stderr)
-        pprint.pprint(json_ip_bindings, file=sys.stderr)
+        pprint.pprint(mysql_ip_bindings, stream=sys.stderr)
+        pprint.pprint(json_ip_bindings, stream=sys.stderr)
 
         if (json_mac_addresses == mysql_mac_addresses):
             return True

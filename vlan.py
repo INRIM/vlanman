@@ -194,7 +194,7 @@ class Vlan:
             if mac not in mac_set:
                 mac_set.add(mac)
             else:
-                raise Exception('RADIUS config: duplicated MAC addess')
+                raise Exception('RADIUS config: duplicated MAC addess: "{}"'.format(mac))
             
             # Validate IPv4 address, if present
             if ipv4:
@@ -202,11 +202,11 @@ class Vlan:
             
                 # Verify if IP address is within the LAN and/or is duplicate    
                 if ipv4 not in self.vlan_cidr_network:
-                    raise Exception('RADIUS config: IPv4 outside of CIDR range.')
+                    raise Exception('RADIUS config: IPv4 outside of CIDR range: "{}".'.format(ipv4))
                 if ipv4 not in ip_set:
                     ip_set.add(ipv4)
                 else:
-                    raise Exception('RADIUS config: duplicated IPv4 addess:"{}".'.format(ipv4))
+                    raise Exception('RADIUS config: duplicated IPv4 addess: "{}".'.format(ipv4))
 
             # Save result to a dictionary
             self.radius_config.append({'mac': mac,

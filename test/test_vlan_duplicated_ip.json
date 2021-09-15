@@ -1,0 +1,32 @@
+[
+    {
+        "Descrizione": "Test host 2",
+        "Hostname": "test-2",
+        "Mac Address": "00:A0:03:18:A6:BC",
+        "IPv4 address": "10.61.0.30",
+        "Note/commenti": "Test 2",
+        "Sistema operativo": "Windows 91",
+        "Referente": "Tizio Caio",
+        "Stanza": "Cp202"
+    },
+    {
+        "Descrizione": "Test host 3",
+        "Hostname": "test-3",
+        "Mac Address": "00:A0:03:20:A6:BC",
+        "IPv4 address": "10.61.0.66",
+        "Note/commenti": "Test 3",
+        "Sistema operativo": "Windows XP",
+        "Referente": "Sempronio",
+        "Stanza": "Cp203"
+    },
+    {
+        "Descrizione": "Test host 4",
+        "Hostname": "test-4",
+        "Mac Address": "00:A0:03:20:A6:BF",
+        "IPv4 address": "10.61.0.66",
+        "Note/commenti": "Test 4",
+        "Sistema operativo": "Windows Vista",
+        "Referente": "Amico",
+        "Stanza": "Cp204"
+    }
+]

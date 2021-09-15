@@ -89,7 +89,7 @@ class TestVlan(unittest.TestCase):
         vlan_test.dump_to_dhcpd()
         self.assertTrue(filecmp.cmp('test_vlan_unittest.conf', 'test_vlan.conf'))
     
-    def test_initial_radius_sql(self):
+    def test_01_initial_radius_sql(self):
         """ Import a test vlan JSON and verify that the MAC addresses are successfully added to DHCP. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
         vlan_test.generate_radius_config(json_in='test_vlan.json')
@@ -98,7 +98,7 @@ class TestVlan(unittest.TestCase):
         vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan.json', 601))
     
-    def test_sql_addhost(self):
+    def test_02_sql_addhost(self):
         """ Add a new host to RADIUS database and change the IP of another host. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
         vlan_test.generate_radius_config(json_in='test_vlan_addhost.json')
@@ -107,7 +107,7 @@ class TestVlan(unittest.TestCase):
         vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_addhost.json', 601))
     
-    def test_sql_removehost(self):
+    def test_03_sql_removehost(self):
         """ Remove a host from RADIUS database and add an IP address to the third host. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
         vlan_test.generate_radius_config(json_in='test_vlan_removehost.json')
@@ -116,7 +116,7 @@ class TestVlan(unittest.TestCase):
         vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json', 601))
     
-    def test_sql_duplicate_mac(self):
+    def test_04_sql_duplicate_mac(self):
         """ Add a host with a duplicated MAC address. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
         try:
@@ -127,7 +127,7 @@ class TestVlan(unittest.TestCase):
                 mysql_settings = json.load(f)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json', 601))
 
-    def test_sql_duplicate_ip(self):
+    def test_05_sql_duplicate_ip(self):
         """ Add a host with a duplicated IPv4 address. """
         vlan_test = Vlan(601, '10.61.0.0/24', 'VLAN_TEST', 'test_vlan_unittest.conf')
         try:
@@ -138,7 +138,7 @@ class TestVlan(unittest.TestCase):
                 mysql_settings = json.load(f)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json', 601))
 
-    def test_sql_differentvlan(self):
+    def test_06_sql_differentvlan(self):
         """ Move a host to a different VLAN. """
         vlan_test = Vlan(701, '10.71.0.0/24', 'VLAN_TEST_2', 'test_vlan_unittest.conf')
         vlan_test.generate_radius_config(json_in='test_vlan_differentvlan.json')

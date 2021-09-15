@@ -125,6 +125,7 @@ class TestVlan(unittest.TestCase):
             pass
         with open('test_mysql_settings.json', 'r') as f:
                 mysql_settings = json.load(f)
+        vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json', 601))
 
     def test_05_sql_duplicate_ip(self):
@@ -136,6 +137,7 @@ class TestVlan(unittest.TestCase):
             pass
         with open('test_mysql_settings.json', 'r') as f:
                 mysql_settings = json.load(f)
+        vlan_test.dump_to_radius_mysql(**mysql_settings)
         self.assertTrue(self.compare_databases(mysql_settings, 'test_vlan_removehost.json', 601))
 
     def test_06_sql_differentvlan(self):

@@ -75,6 +75,23 @@ class Vlan:
             with open(json_out, 'w') as f:
                 json.dump(self.sheet_records, f, indent=4)
 
+    def mark_column(self, text):
+        """ Mark the columns containing the text to red, to mark that there's an error. """     
+        gc = gspread.service_account()
+        sh = gc.open(self.sheet_name)
+        
+        # Search all matching cells
+        cell_list = sh.sheet1.findall(text)
+
+        for cell in cell_list:
+            sh.sheet1.format(cell.address, {
+                    "backgroundColor": {
+                        "red": 1.0,
+                        "green": 0.0,
+                        "blue": 0.0    
+                    }
+            })
+
     def generate_dhcp_config(self, json_in=''):
         """ Validate data and generate a DHCP config. """
         # If given, retrieve file from JSON
@@ -194,7 +211,8 @@ class Vlan:
             if mac not in mac_set:
                 mac_set.add(mac)
             else:
-                raise Exception('RADIUS config: duplicated MAC addess: "{}"'.format(mac))
+                raise Exception('RADIUS config: duplicated MAC addess: "{}"'.format(host['Mac Address']),
+                    host['Mac Address'])
             
             # Validate IPv4 address, if present
             if ipv4:
@@ -202,11 +220,13 @@ class Vlan:
             
                 # Verify if IP address is within the LAN and/or is duplicate    
                 if ipv4 not in self.vlan_cidr_network:
-                    raise Exception('RADIUS config: IPv4 outside of CIDR range: "{}".'.format(ipv4))
+                    raise Exception('RADIUS config: IPv4 outside of CIDR range: "{}".'.format(host['IPv4 address']),
+                        host['IPv4 address'])
                 if ipv4 not in ip_set:
                     ip_set.add(ipv4)
                 else:
-                    raise Exception('RADIUS config: duplicated IPv4 addess: "{}".'.format(ipv4))
+                    raise Exception('RADIUS config: duplicated IPv4 addess: "{}".'.format(host['IPv4 address']),
+                        host['IPv4 address'])
 
             # Save result to a dictionary
             self.radius_config.append({'mac': mac,

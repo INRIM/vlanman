@@ -179,10 +179,11 @@ class Vlan:
                 f.write('host {} {{\n  hardware ethernet {};\n  fixed-address {};\n}}\n\n'.format(host['hostname'], host['mac'],
                         host['ipv4']))                               
 
-    def generate_radius_config(self, json_in=''):
+    def generate_radius_config(self, json_in='', mark_errors=False):
         """ Validate MAC address and prepare a list of MAC addresses to put into a RADIUS config. """                           
         # If given, retrieve file from JSON
         if json_in:
+            mark_errors = False
             with open(json_in, 'r') as f:
                 self.sheet_records = json.load(f)
         
@@ -211,8 +212,9 @@ class Vlan:
             if mac not in mac_set:
                 mac_set.add(mac)
             else:
-                raise Exception('RADIUS config: duplicated MAC addess: "{}"'.format(host['Mac Address']),
-                    host['Mac Address'])
+                if mark_errors:
+                    self.mark_column(host['Mac Address'])
+                raise Exception('RADIUS config: duplicated MAC addess: "{}"'.format(host['Mac Address']))
             
             # Validate IPv4 address, if present
             if ipv4:
@@ -220,13 +222,16 @@ class Vlan:
             
                 # Verify if IP address is within the LAN and/or is duplicate    
                 if ipv4 not in self.vlan_cidr_network:
-                    raise Exception('RADIUS config: IPv4 outside of CIDR range: "{}".'.format(host['IPv4 address']),
-                        host['IPv4 address'])
+                    if mark_errors:
+                        self.mark_column(host['IPv4 address'])
+                    raise Exception('RADIUS config: IPv4 outside of CIDR range: "{}".'.format(host['IPv4 address']))
+                
                 if ipv4 not in ip_set:
                     ip_set.add(ipv4)
                 else:
-                    raise Exception('RADIUS config: duplicated IPv4 addess: "{}".'.format(host['IPv4 address']),
-                        host['IPv4 address'])
+                    if mark_errors:
+                        self.mark_column(host['IPv4 address'])
+                    raise Exception('RADIUS config: duplicated IPv4 addess: "{}".'.format(host['IPv4 address']))
 
             # Save result to a dictionary
             self.radius_config.append({'mac': mac,

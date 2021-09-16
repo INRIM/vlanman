@@ -86,7 +86,7 @@ for v in list_vlan:
     # Synchronize with FreeRADIUS MySQL database
     if not args.no_radius:
         try:
-            v.generate_radius_config()
+            v.generate_radius_config(mark_errors=True)
             with open(args.mysql_settings, 'r') as f:
                 mysql_settings = json.load(f)
             v.dump_to_radius_mysql(**mysql_settings, print_function=vlan_logger.info)

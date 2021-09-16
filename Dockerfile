@@ -26,6 +26,10 @@ FROM python:alpine
 LABEL maintainer="d.pilori@inrim.it"
 VOLUME ["/var/lib/vlan-config-gen"]
 
+# Set timezone
+RUN apk add --no-cache tzdata
+ENV TZ Europe/Rome
+
 # Copy Google credentials for gspread
 RUN mkdir -p /root/.config/gspread
 COPY service_account.json /root/.config/gspread/service_account.json

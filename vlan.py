@@ -37,7 +37,7 @@ _HOSTNAME_REGEX = '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Z
 
 class Vlan:
     """ Basic class to define a single VLAN, loading all the settings. """
-    def __init__(self, vlan_id, ip_network, sheet_name, dhcpd_out_file, comment=''):
+    def __init__(self, vlan_id, ip_network, sheet_name, dhcpd_out_file, comment='', allow_duplicated_ip=False):
          """ Constructor to set the main VLAN parameters. """
          # Set VLAN id
          try:
@@ -61,7 +61,8 @@ class Vlan:
          # Set other parameters
          self.sheet_name = sheet_name
          self.dhcpd_out_file = dhcpd_out_file
-         
+         self.allow_duplicated_ip = allow_duplicated_ip
+
     def retrieve_data(self, json_out=''):
         """ Retrieve updated data from a Google Sheet file. """     
         gc = gspread.service_account()
@@ -144,10 +145,11 @@ class Vlan:
             # Verify if IP address is within the LAN and/or is duplicate    
             if ipv4 not in self.vlan_cidr_network:
                 raise Exception('DHCP config: IPv4 outside of CIDR range.')
-            if ipv4 not in ip_set:
-                ip_set.add(ipv4)
-            else:
-                raise Exception('DHCP config: duplicated IPv4 addess:"{}".'.format(ipv4))
+            if not self.allow_duplicated_ip:
+                if ipv4 not in ip_set:
+                    ip_set.add(ipv4)
+                else:
+                    raise Exception('DHCP config: duplicated IPv4 addess:"{}".'.format(ipv4))
             
             # Save result to a dictionary
             self.dhcp_config.append({'hostname': hostname,
@@ -226,12 +228,13 @@ class Vlan:
                         self.mark_column(host['IPv4 address'])
                     raise Exception('RADIUS config: IPv4 outside of CIDR range: "{}".'.format(host['IPv4 address']))
                 
-                if ipv4 not in ip_set:
-                    ip_set.add(ipv4)
-                else:
-                    if mark_errors:
-                        self.mark_column(host['IPv4 address'])
-                    raise Exception('RADIUS config: duplicated IPv4 addess: "{}".'.format(host['IPv4 address']))
+                if not self.allow_duplicated_ip:
+                    if ipv4 not in ip_set:
+                        ip_set.add(ipv4)
+                    else:
+                        if mark_errors:
+                            self.mark_column(host['IPv4 address'])
+                        raise Exception('RADIUS config: duplicated IPv4 addess: "{}".'.format(host['IPv4 address']))
 
             # Save result to a dictionary
             self.radius_config.append({'mac': mac,

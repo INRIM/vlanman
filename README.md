@@ -68,6 +68,7 @@ docker volume create gsheets-vlan-gen
         "ip_network": "192.0.2.0/24",
         "sheet_name": "TEST_VLAN999",
         "dhcpd_out_file": "vlan_999.conf",
+        "allow_duplicated_ip": true,
         "comment": "Test VLAN 999"    
     },
     [...]
@@ -126,7 +127,7 @@ systemctl --now enable gsheets-vlan-gen.timer
 - A script to periodically clean the RADIUS accounting table `radacct` is documented on [clean-radacct.md](docs/clean-radacct.md).
 
 ## License and copyright
-Copyright &copy; 2021 Istituto Nazionale di Ricerca Metrologica (INRiM). For information contact Dario Pilori <d.pilori@inrim.it>.
+Copyright &copy; 2021-2022 Istituto Nazionale di Ricerca Metrologica (INRiM). For information contact Dario Pilori <d.pilori@inrim.it>.
 
 This software (and the associated documentation) is released under a [MIT License](https://opensource.org/licenses/MIT).
 

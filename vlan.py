@@ -2,7 +2,7 @@
 # create/dump to JSON, generate and validate a DHCP configuration, generate
 # and validate a FreeRADIUS configuration on a MySQL database.
 #
-# Copyright (c) 2021 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
+# Copyright (c) 2021-2022 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

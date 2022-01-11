@@ -2,7 +2,7 @@
 # Script to synchronize a FreeRADIUS database and and ISC DHCPd configuration from
 # Google Sheet files.
 #
-# Copyright (c) 2021 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
+# Copyright (c) 2021-2022 Istituto Nazionale di Ricerca Metrologica <d.pilori@inrim.it>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

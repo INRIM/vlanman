@@ -4,7 +4,7 @@
         "ip_network": "192.0.2.0/24",
         "sheet_name": "TEST_VLAN999",
         "dhcpd_out_file": "vlan_999.conf",
-        "allow_duplicated_ip": true,
+        "allow_duplicated_ip": false,
         "comment": "Test VLAN 999"    
     }
 ]

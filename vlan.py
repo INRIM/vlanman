@@ -68,7 +68,7 @@ class Vlan:
         gc = gspread.service_account()
         sh = gc.open(self.sheet_name)
         
-        self.sheet_records = sh.sheet1.get_all_records(expected_headers=['Mac Address', 'IPv4 address'])
+        self.sheet_records = sh.sheet1.get_all_records(expected_headers=['Mac Address'])
         self.dhcp_config = list()
         
         # If optional argument is given, dump to JSON

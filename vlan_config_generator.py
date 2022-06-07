@@ -48,7 +48,9 @@ cli_parser.add_argument("-d", "--mysql-settings",
 cli_parser.add_argument("-l", "--log-file",
                        help="Log file.", default="output.log")     
 cli_parser.add_argument("-v", "--verbose",
-                       help="Be verbose.", action='store_true')                                             
+                       help="Be verbose.", action='store_true')
+cli_parser.add_argument("--specific-vlans",
+                       help="Process only a list of VLANs (space separated).", metavar='VLAN_ID', nargs='+', type=int)                                       
 args = cli_parser.parse_args()
 
 # Set up logging
@@ -68,6 +70,10 @@ with open(args.list_vlans, 'r') as f:
 
 # For all VLANS
 for v in list_vlan:
+    # Verify if list of specific VLANs is given
+    if args.specific_vlans and (v.vlan_id not in args.specific_vlans):
+        continue
+
     # Get data from Google Sheets
     try:
          v.retrieve_data()

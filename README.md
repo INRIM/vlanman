@@ -15,13 +15,15 @@ This software is divided into two files:
 
 The script can be used with the following options:
 ```bash
-$ ./vlan_config_generator.py -h
-usage: vlan_config_generator.py [-h] [-o DIR] [-c JSON_LIST_VLANS] [-d JSON_MYSQL_SETTINGS] [-l LOG_FILE] [-v]
+usage: vlan_config_generator.py [-h] [--dhcp] [--no-radius] [-o DIR] [-c JSON_LIST_VLANS] [-d JSON_MYSQL_SETTINGS] [-l LOG_FILE] [-v]
+                                [--specific-vlans VLAN_ID [VLAN_ID ...]]
 
-Generate a set of ISC DHCPd configuration files and synchronize FreeRADIUS from Google Sheets files.
+Script to synchronize a FreeRADIUS database and and ISC DHCPd configuration from Google Sheet files.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --dhcp                Generate ISC DHCPd configuration files.
+  --no-radius           Do not synchronize with FreeRADIUS database.
   -o DIR, --output-dir DIR
                         Output dir for DHCPd configuration files.
   -c JSON_LIST_VLANS, --list-vlans JSON_LIST_VLANS
@@ -31,6 +33,8 @@ optional arguments:
   -l LOG_FILE, --log-file LOG_FILE
                         Log file.
   -v, --verbose         Be verbose.
+  --specific-vlans VLAN_ID [VLAN_ID ...]
+                        Process only a list of VLANs (space separated).
 ```
 
 ### Google Sheet format
@@ -109,15 +113,22 @@ docker run --rm -v gsheets-vlan-gen:/var/lib/vlan-config-gen gsheets-vlan-gen
 ### Periodic update with systemd timer
 A good solution is the use of [systemd timers](https://wiki.archlinux.org/index.php/Systemd/Timers) to periodically
 update the configuraiton files. In the `systemd` directory there are scripts to help doing so. To install them:
-1. Copy `gsheets-vlan-gen.service` and `gsheets-vlan-gen.timer` to `/etc/systemd/system`.
-2. Copy `gsheets-vlan-gen.sh` to `/usr/local/bin`.
+1. Copy `gsheets-radius-sync.service` and `gsheets-radius-sync.timer` to `/etc/systemd/system`.
+2. Copy `gsheets-radius-sync.sh` to `/usr/local/bin`.
 3. Reload systemd:
 ```bash
 systemctl daemon-reload
 ```
 4. Enable systemd timer
 ```bash
-systemctl --now enable gsheets-vlan-gen.timer
+systemctl --now enable gsheets-radius-sync.timer
+```
+
+### Force update of single VLAN
+Sometimes it is necessary to instantly update a single VLAN. For this purpose, you can use the `--specific-vlans` option of
+`vlan_config_generator.py`. For instance, using the Docker container, to update only VLANs 1 and 10, run:
+```bash
+docker run --rm -v gsheets-vlan-gen:/var/lib/vlan-config-gen gsheets-vlan-gen --specific-vlans 1 10
 ```
 
 ## Other documentation

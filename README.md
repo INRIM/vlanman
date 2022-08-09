@@ -135,7 +135,6 @@ docker run --rm -v gsheets-vlan-gen:/var/lib/vlan-config-gen gsheets-vlan-gen --
 - An example of [FreeRADIUS](https://freeradius.org/) configuration for this project is available on [radius.md](docs/radius.md).
 - An example of configuration for [ArubaOS-CX](https://www.arubanetworks.com/products/switches/) switches and
   [MikroTik](https://mikrotik.com/) devices is available on [network-devices.md](docs/network-devices.md).
-- A script to periodically clean the RADIUS accounting table `radacct` is documented on [clean-radacct.md](docs/clean-radacct.md).
 
 ## License and copyright
 Copyright &copy; 2021-2022 Istituto Nazionale di Ricerca Metrologica (INRiM). For information contact Dario Pilori <d.pilori@inrim.it>.

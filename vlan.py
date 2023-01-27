@@ -37,7 +37,7 @@ _HOSTNAME_REGEX = '^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Z
 
 class Vlan:
     """ Basic class to define a single VLAN, loading all the settings. """
-    def __init__(self, vlan_id, ip_network, sheet_name, dhcpd_out_file, comment='', allow_duplicated_ip=False):
+    def __init__(self, vlan_id, ip_network, sheet_name, dhcpd_out_file, comment='', allow_duplicated_ip=False, service_account_path=''):
          """ Constructor to set the main VLAN parameters. """
          # Set VLAN id
          try:
@@ -48,10 +48,12 @@ class Vlan:
              
          # Set IP network
          self.vlan_cidr_network = ipaddress.ip_network(ip_network)
-             
+              
          # If given, set a comment
-         if comment:
-             self.comment = comment
+         self.comment = comment
+        
+         # If given, set path of gspread service_account.json config file
+         self.service_account_path = service_account_path
          
          # Initialize the DHCP and RADIUS config and the sheet records to empty list    
          self.sheet_records = list()
@@ -65,7 +67,10 @@ class Vlan:
 
     def retrieve_data(self, json_out=''):
         """ Retrieve updated data from a Google Sheet file. """     
-        gc = gspread.service_account()
+        if self.service_account_path:
+            gc = gspread.service_account(filename=self.service_account_path)
+        else:
+            gc = gspread.service_account()
         sh = gc.open(self.sheet_name)
         
         self.sheet_records = sh.sheet1.get_all_records(expected_headers=['Mac Address'])
@@ -78,7 +83,10 @@ class Vlan:
 
     def mark_column(self, text):
         """ Mark the columns containing the text to red, to mark that there's an error. """     
-        gc = gspread.service_account()
+        if self.service_account_path:
+            gc = gspread.service_account(filename=self.service_account_path)
+        else:
+            gc = gspread.service_account()
         sh = gc.open(self.sheet_name)
         
         # Search all matching cells

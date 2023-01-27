@@ -45,6 +45,8 @@ cli_parser.add_argument("-c", "--list-vlans",
                        help="JSON-formatted list of VLANs.", metavar="JSON_LIST_VLANS", default="list_vlans.json")
 cli_parser.add_argument("-d", "--mysql-settings",
                        help="JSON-formatted MySQL settings.", metavar="JSON_MYSQL_SETTINGS", default="mysql_settings.json")
+cli_parser.add_argument("-s", "--service-account",
+                       help="JSON-formatted gspread service account data.", metavar="JSON_SERVICE_ACCOUNT")
 cli_parser.add_argument("-l", "--log-file",
                        help="Log file.", default="output.log")     
 cli_parser.add_argument("-v", "--verbose",
@@ -73,6 +75,10 @@ for v in list_vlan:
     # Verify if list of specific VLANs is given
     if args.specific_vlans and (v.vlan_id not in args.specific_vlans):
         continue
+
+    # Set service account path, if given
+    if args.service_account:
+        v.service_account_path = args.service_account
 
     # Get data from Google Sheets
     try:
